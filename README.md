@@ -1,7 +1,7 @@
-# room3D — 客飯廳 3D Living Room
+# room3D — 3D Living & Dining Room
 
 An interactive **3D living & dining room** built with **three.js (via importmap)** in a **single HTML file**.
-Modelled after a real Hong Kong "2房1廳" flat (living room ≈ **4.25 m × 2.60 m**, from the floor plan in `images/`).
+Modelled after a real Hong Kong "2-bedroom, 1-living-room" flat (living room ≈ **4.25 m × 2.60 m**, from the floor plan in `images/`).
 
 > **Procedural only.** Every object is generated from three.js geometry primitives at runtime —
 > **no 3D models, no texture maps, no images**. Materials, planks, the city outside the window,
@@ -26,7 +26,7 @@ Requires an internet connection on first load (three.js r170 is pulled from the 
 | Keys `1`–`5` | Camera presets (Entrance / Sofa / Dining / TV / Top) |
 | Key `N` | Day ⇄ Night |
 
-On-screen chips: camera presets, **🌙 夜燈 Night** (cross-fades the whole light rig), **🎥 環繞 Tour** (guided camera), **⟳ 自轉 Spin**.
+On-screen chips: camera presets, **🌙 Night** (cross-fades the whole light rig), **🎥 Tour** (guided camera), **⟳ Spin**.
 
 While the page is open, a small console hook is available for tinkering:
 `__room.snapTo('sofa')`, `__room.look(px,py,pz, tx,ty,tz)`, `__room.setNight(true)`, `__room.apply(1)`, `__room.png()`.
@@ -39,7 +39,7 @@ While the page is open, a small console hook is available for tinkering:
   wavy sheer curtains (vertex-animated), brass rod, ceiling fan, split A/C.
   Outside: a high-floor **city view** — procedurally generated towers with ~2 000 instanced window
   quads that light up at night, gradient sky shader, distance fog.
-* **TV wall** — the **中空櫃** "hollow" floating oak console (open middle shelf with router/books/plant),
+* **TV wall** — the **"hollow" floating oak console** (open middle shelf with router/books/plant),
   55" wall TV whose screen runs a procedural shader animation (art mode at night), soundbar, white
   4-drawer chest, wall clock above the main door.
 * **Display wall** — walnut glass display cabinet with LED strip and six tiny pastel figurines
