@@ -1,0 +1,7 @@
+# Reference material (floor plan / photos / notes) — intentionally NOT tracked
+images/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+desktop.ini
