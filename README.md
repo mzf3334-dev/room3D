@@ -32,17 +32,31 @@ On-screen chips: camera presets, **🌙 Night** (cross-fades the whole light rig
 
 ## What's in the room
 
+The layout follows the owner's sketch (**`images/tv_cabinet.jpg`**) and the site photos. The
+**north wall is the TV wall** and reads, left to right, exactly as drawn:
+
+| 廚房門 | 中空櫃 |  電視櫃 — 白色飾牆 + **冷氣窗**(窗口式冷氣) + 電視 + 長櫃  | 廁門貨架 | 廁所門 |
+| --- | --- | --- | --- | --- |
+| 0.70 m | 0.50 m | 1.95 m — **云石窗台 ≈ 2 m** | 0.40 m | 0.70 m |
+
 * **Shell** — teak strip-parquet floor (≈230 instanced planks), white walls, 6 recessed downlights.
-* **Window wall** — casement window with security grille, wavy sheer curtains, ceiling fan, split A/C.
-  Outside: a procedural high-floor **city view** whose lit windows glow at night.
-* **TV wall** — floating oak console, 55" wall TV running a shader animation, soundbar, wall clock.
-* **Display wall** — walnut display cabinet with LED strip, tiny figurines and a book niche.
-* **Living side** — leather sofa, coffee table, ottoman with a **sleeping ginger cat** (breathing
-  animation), rug, teddy bear, sideboard with lamp and abstract art.
-* **Dining side** — light-oak table and chairs, pendant lamp, fruit bowl; a **kitchen pass-through**
-  shows a mini galley kitchen (hob + wok, range hood, washing machine, fridge) beyond.
-* **Entry / bathroom** — main door, shoes, umbrella stand, coat hooks; a tiled mini-bathroom visible
-  through the folding door.
+* **電視牆 TV wall** — light-oak 廚房門; walnut **中空櫃** (glass display over an open shoe rack);
+  raised white feature wall carrying the **55″ TV** and the **窗口式冷氣** in its 冷氣窗; the long low
+  **電視櫃** drawn in the sketch — top slab + divided lower level, **three bays**, open, white with
+  oak lipping; dark plank wall with the clock, the **廁門貨架** book shelf, and the 廁所門.
+* **Window wall (south)** — ≈ 3 m window with a **云石 window board**, security grille and sheer
+  curtains. The sofa sits with its back to it, facing the TV wall. Outside: a procedural high-floor
+  **city view** whose lit windows glow at night.
+* **Living side** — cream leather sofa, ottoman with a **sleeping ginger cat** (breathing animation),
+  rug and teddy bear. **No coffee table.**
+* **大柜 & 飯台** — the big pastel drawer chest stands on the sofa's **right**; the light-oak dining
+  table and chairs, pendant lamp and fruit bowl sit on its **left**, with the sideboard, lamp and
+  abstract art on the west wall.
+* **Entry / rooms** — main door on the east wall with shoes, umbrella stand and coat hooks; behind
+  the TV wall you glimpse a mini galley kitchen (hob + wok, 抽氣扇, washing machine, fridge) and a
+  tiled bathroom.
+
+**No ceiling fan** and no split A/C — the cooling is the window-type unit above the TV cabinet.
 
 ## Lighting
 

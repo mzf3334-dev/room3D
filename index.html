@@ -125,6 +125,16 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
    room3D — 客飯廳 (Living & Dining room)
    A Hong Kong family flat, 2房1廳 · living room ≈ 4.25 m × 2.60 m
    Everything below is procedural geometry. No texture maps, no models.
+
+   Layout is taken from the reference sketch (images/tv_cabinet.jpg) and the
+   site photos. The NORTH wall is the 電視牆 (TV wall):
+
+     廚房門 │ 中空櫃 │  電視櫃 = 白色飾牆 + 冷氣窗(窗口式冷氣) + 電視  │ 廁門貨架 │ 廁所門
+     0.70m    0.50m              1.95m (云石窗台 ≈ 2 m)               0.40m      0.70m
+
+   The SOUTH wall carries the main window (≈ 3 m, 云石窗台) — the sofa sits
+   with its back to it, facing the TV wall. The entrance door is on the EAST
+   wall. There is no coffee table and no ceiling fan.
    ===================================================================== */
 
 /* ---------- seeded pseudo-random (reproducible detail) ---------- */
@@ -137,6 +147,25 @@ const L = 4.25, D = 2.60, H = 2.62, T = 0.12;
 const X0 = -L/2, X1 = L/2, Z0 = -D/2, Z1 = D/2;
 const FL = 0.015;                       // top of parquet
 const DEG = Math.PI/180;
+
+/* ---------- TV wall (north) — west ➜ east, derived from the sketch ---------- */
+const KD0 = X0,        KD1 = KD0 + 0.70;      // 廚房門      kitchen doorway
+const TC0 = KD1,       TC1 = TC0 + 0.50;      // 中空櫃      tall display cabinet
+const TV0 = TC1,       TV1 = TV0 + 1.95;      // 電視櫃 run  (白牆 + 冷氣窗 + 電視 + 長櫃)
+const SB0 = TV1,       SB1 = SB0 + 0.40;      // 廁門貨架    open book shelf
+const TD0 = SB1,       TD1 = X1;              // 廁所門      toilet doorway
+const TVC     = (TV0 + TV1) / 2;              // centre line of the TV composition
+const ACW     = 1.30;                         // 冷氣窗 opening width
+const ACY0    = 1.88, ACY1 = 2.36;            // 冷氣窗 opening (height band)
+const CON_Y1  = 0.74, CON_Y2 = 0.42;          // TV-cabinet shelf levels
+const CON_D   = 0.42;                         // TV-cabinet depth
+const MARBLE  = 0.034;                        // 云石 slab thickness
+
+/* ---------- main window (south wall) — ≈ 3 m of 云石窗台 ---------- */
+const WIN_X0 = -1.50, WIN_X1 = 1.50, WIN_Y0 = 0.86, WIN_Y1 = 2.26;
+
+/* ---------- main door (east wall) ---------- */
+const ED0 = -1.05, ED1 = -0.17;
 
 /* ---------- renderer / scene / camera ---------- */
 const app = document.getElementById('app');
@@ -155,10 +184,10 @@ const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0xdde8f0, 26, 88);
 
 const camera = new THREE.PerspectiveCamera(58, window.innerWidth/window.innerHeight, 0.05, 220);
-camera.position.set(1.55, 1.70, -0.95);
+camera.position.set(1.55, 1.62, -0.62);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(-0.70, 0.85, 0.50);
+controls.target.set(-0.90, 0.90, 0.35);
 controls.enableDamping = true;
 controls.dampingFactor = 0.07;
 controls.minDistance = 0.7;
@@ -218,6 +247,13 @@ const M = {
   frosted    : phys({ color:0xe6eef2, transparent:true, opacity:0.5, roughness:0.45, side:THREE.DoubleSide }),
   mirror     : std({ color:0xe8f2f8, roughness:0.05, metalness:1.0, envMapIntensity:1.6 }),
   curtain    : std({ color:0xf3efe6, transparent:true, opacity:0.6, side:THREE.DoubleSide, roughness:1.0 }),
+  marble     : std({ color:0xe0ddd5, roughness:0.16, metalness:0.05, envMapIntensity:1.15 }),   // 云石
+  slat       : std({ color:0x8a6440, roughness:0.55 }),                                        // 木條子
+  wallPanel  : std({ color:0xf7f6f3, roughness:0.30 }),                                        // 白色飾牆
+  panelLine  : std({ color:0xdcdad4, roughness:0.55 }),
+  plank      : std({ color:0x5d4330, roughness:0.52 }),                                        // 深色木皮牆
+  acShell    : std({ color:0xf2f1ec, roughness:0.34 }),
+  acGrille   : std({ color:0xb9bfc5, roughness:0.45, metalness:0.35 }),
   screenOff  : std({ color:0x0a121c, roughness:0.25, metalness:0.4 }),
 };
 
@@ -244,8 +280,8 @@ const amb = new THREE.AmbientLight(0xfff2e2, 0.12);
 scene.add(amb);
 
 const sun = new THREE.DirectionalLight(0xfff1dc, 3.1);
-sun.position.set(-9, 6.8, 3.6);
-sun.target.position.set(1.6, 0.0, -0.4);
+sun.position.set(-2.6, 6.8, 9.4);        // south, through the living-room window
+sun.target.position.set(0.5, 0.0, -1.2);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 sun.shadow.camera.left = -5.2; sun.shadow.camera.right = 5.2;
@@ -267,18 +303,18 @@ const DL = [];
   DL.push(p);
 });
 const pendantLight = new THREE.PointLight(0xffcf9a, 0, 5.0, 2);
-pendantLight.position.set(1.0, 1.90, 0.25);
+pendantLight.position.set(-1.25, 1.90, 0.05);
 pendantLight.castShadow = true;
 pendantLight.shadow.mapSize.set(1024,1024);
 pendantLight.shadow.camera.near = 0.1; pendantLight.shadow.camera.far = 7;
 pendantLight.shadow.bias = -0.004;
 dLight(pendantLight, 0, 3.0);
 
-const cabLight  = dLight(new THREE.PointLight(0xffe0b0, 0, 1.9, 2), 0.2, 0.9);   cabLight.position.set(-0.62, 1.78, -1.08);
-const kitLight  = dLight(new THREE.PointLight(0xffd9a8, 0, 6.0, 2), 0.3, 2.0);   kitLight.position.set(1.45, 2.15, -2.1);
-const bathLight = dLight(new THREE.PointLight(0xeef4ff, 0, 5.0, 2), 0.25, 1.4);  bathLight.position.set(-1.55, 2.1, -1.9);
-const lampLight = dLight(new THREE.PointLight(0xffd2a0, 0, 3.2, 2), 0, 1.1);     lampLight.position.set(0.55, 1.05, 1.02);
-const tvLight   = dLight(new THREE.PointLight(0x7fb2ff, 0, 3.0, 2), 0, 0.6);     tvLight.position.set(1.55, 1.30, -0.55);
+const cabLight  = dLight(new THREE.PointLight(0xffe0b0, 0, 1.9, 2), 0.2, 0.9);   cabLight.position.set(-1.18, 1.80, Z0+0.34);
+const kitLight  = dLight(new THREE.PointLight(0xffd9a8, 0, 6.0, 2), 0.3, 2.0);   kitLight.position.set(-1.75, 2.15, -2.1);
+const bathLight = dLight(new THREE.PointLight(0xeef4ff, 0, 5.0, 2), 0.25, 1.4);  bathLight.position.set(1.75, 2.1, -2.0);
+const lampLight = dLight(new THREE.PointLight(0xffd2a0, 0, 3.2, 2), 0, 1.1);     lampLight.position.set(-1.90, 1.05, 0.80);
+const tvLight   = dLight(new THREE.PointLight(0x7fb2ff, 0, 3.0, 2), 0, 0.6);     tvLight.position.set(TVC, 1.30, Z0+0.60);
 
 /* sky dome — procedural gradient shader */
 const skyUni = {
@@ -286,7 +322,7 @@ const skyUni = {
   uHor: { value:new THREE.Color(0xdfeaf2) },
   uBot: { value:new THREE.Color(0xc8d6e0) },
   uGlow:{ value:new THREE.Color(0xffe2b0) },
-  uSunDir:{ value:new THREE.Vector3(-1, 0.22, 0.10).normalize() },
+  uSunDir:{ value:new THREE.Vector3(0.12, 0.22, 1).normalize() },
   uGlowI:{ value:1.0 },
 };
 const sky = new THREE.Mesh(
@@ -388,151 +424,153 @@ shell.add(box(L+0.4, 0.014, D+0.4, std({color:0x3a2418, roughness:1}), 0, 0.007,
   shell.add(inst);
 }
 
-/* ceiling + window-side soffit */
+/* ceiling + bulkheads (over the TV wall and over the window) */
 shell.add(box(L+0.4, 0.1, D+0.4, M.ceil, 0, H+0.05, 0));
-shell.add(box(0.38, 0.26, D+0.02, M.ceil, X0+0.19, H-0.13, 0));
+shell.add(box(L+0.02, 0.26, 0.40, M.ceil, 0, H-0.13, Z0+0.20));   // 假天花 over the TV wall
+shell.add(box(L+0.02, 0.20, 0.32, M.ceil, 0, H-0.10, Z1-0.16));   // pelmet over the window
 
-/* walls — north wall carries: bathroom | display wall | main door | kitchen */
-const wallN = [
-  /* solid segments: [x0, x1] */ [-L/2, -1.96], [-1.24, -0.07], [0.81, 0.95], [1.81, L/2]
-];
+/* walls — NORTH wall is the TV wall:  廚房門 | 中空櫃 | 電視 | 廁門貨架 | 廁所門 */
+const ACX0 = TVC - ACW/2, ACX1 = TVC + ACW/2;                     // 冷氣窗 opening
+const wallN = [[TC0, TC1], [TV0, ACX0], [ACX1, TV1], [SB0, SB1]]; // solid, minus the A/C window
 wallN.forEach(([a,b])=> shell.add(box(b-a, H, T, M.paint, (a+b)/2, H/2, Z0-T/2)));
-/* headers above openings */
-shell.add(box(0.72, H-2.04, T, M.paint, -1.60, (H+2.04)/2, Z0-T/2));   // bathroom
-shell.add(box(0.88, H-2.06, T, M.paint,  0.37, (H+2.06)/2, Z0-T/2));   // main door
-shell.add(box(0.86, H-2.06, T, M.paint,  1.38, (H+2.06)/2, Z0-T/2));   // kitchen
+shell.add(box(ACW, H-ACY1, T, M.paint, TVC, (H+ACY1)/2, Z0-T/2));   // header over 冷氣窗
+shell.add(box(ACW, ACY0, T, M.paint, TVC, ACY0/2, Z0-T/2));         // band below 冷氣窗
+/* headers above the two doorways */
+shell.add(box(KD1-KD0, H-2.06, T, M.paint, (KD0+KD1)/2, (H+2.06)/2, Z0-T/2));   // 廚房門
+shell.add(box(TD1-TD0, H-2.04, T, M.paint, (TD0+TD1)/2, (H+2.04)/2, Z0-T/2));   // 廁所門
 
-/* south / east walls */
-shell.add(box(L+0.24, H, T, M.paint, 0, H/2, Z1+T/2));
-shell.add(box(T, H, D+0.24, M.paint, X1+T/2, H/2, 0));
+/* WEST wall (solid) + EAST wall carrying the main door */
+shell.add(box(T, H, D+0.24, M.paint, X0-T/2, H/2, 0));
+const wallE = [[Z0-0.12, ED0], [ED1, Z1+0.12]];
+wallE.forEach(([a,b])=> shell.add(box(T, H, b-a, M.paint, X1+T/2, H/2, (a+b)/2)));
+shell.add(box(T, H-2.06, ED1-ED0, M.paint, X1+T/2, (H+2.06)/2, (ED0+ED1)/2));
 
-/* west wall around the window opening (z -0.95..0.95, y 0.86..2.24) */
-shell.add(box(T, H, 0.47, M.paint, X0-T/2, H/2, -1.185));
-shell.add(box(T, H, 0.47, M.paint, X0-T/2, H/2,  1.185));
-shell.add(box(T, 0.86, 1.90, M.paint, X0-T/2, 0.43, 0));
-shell.add(box(T, H-2.24, 1.90, M.paint, X0-T/2, (H+2.24)/2, 0));
+/* SOUTH wall = window wall, opening x -1.50..1.50, y 0.86..2.26 */
+shell.add(box(WIN_X0-(X0-0.12), H, T, M.paint, ((X0-0.12)+WIN_X0)/2, H/2, Z1+T/2));
+shell.add(box((X1+0.12)-WIN_X1, H, T, M.paint, (WIN_X1+(X1+0.12))/2, H/2, Z1+T/2));
+shell.add(box(WIN_X1-WIN_X0, WIN_Y0, T, M.paint, (WIN_X0+WIN_X1)/2, WIN_Y0/2, Z1+T/2));
+shell.add(box(WIN_X1-WIN_X0, H-WIN_Y1, T, M.paint, (WIN_X0+WIN_X1)/2, (H+WIN_Y1)/2, Z1+T/2));
 
 /* skirting */
 const skirtY = 0.0375, skirtT = 0.013;
 wallN.forEach(([a,b])=> shell.add(box(b-a, 0.075, skirtT, M.skirt, (a+b)/2, skirtY, Z0+skirtT/2)));
-shell.add(box(L, 0.075, skirtT, M.skirt, 0, skirtY, Z1-skirtT/2));
-shell.add(box(skirtT, 0.075, D, M.skirt, X1-skirtT/2, skirtY, 0));
+wallE.forEach(([a,b])=> shell.add(box(skirtT, 0.075, b-a, M.skirt, X1-skirtT/2, skirtY, (a+b)/2)));
+shell.add(box(WIN_X0-X0, 0.075, skirtT, M.skirt, (X0+WIN_X0)/2, skirtY, Z1-skirtT/2));
+shell.add(box(X1-WIN_X1, 0.075, skirtT, M.skirt, (WIN_X1+X1)/2, skirtY, Z1-skirtT/2));
 shell.add(box(skirtT, 0.075, D, M.skirt, X0+skirtT/2, skirtY, 0));
 
 /* =====================================================================
-   2 · WINDOW (west wall) — frame, glass, grille, sill, sheer curtains
+   2 · MAIN WINDOW (south wall) — 云石窗台, frame, glass, grille, curtains
+   ≈ 3 m of marble window board, exactly as the owner described.
    ===================================================================== */
 {
-  const wx = X0 - T/2;                       // wall centre plane
-  /* reveal liners + oak window board */
-  shell.add(box(T+0.06, 0.03, 1.94, M.skirt, wx, 2.235, 0));
-  shell.add(box(0.24, 0.035, 2.0, M.oak, X0+0.02, 0.842, 0));   // window board (sill)
-  shell.add(box(T, 1.40, 0.02, M.paint, wx, 1.55, -0.94));
-  shell.add(box(T, 1.40, 0.02, M.paint, wx, 1.55,  0.94));
+  const wz = Z1 + T/2;                       // wall centre plane
+  /* reveal liners */
+  shell.add(box(WIN_X1-WIN_X0+0.06, 0.03, T+0.06, M.skirt, 0, WIN_Y1+0.015, wz));
+  shell.add(box(0.02, WIN_Y1-WIN_Y0, T, M.paint, WIN_X0+0.01, (WIN_Y0+WIN_Y1)/2, wz));
+  shell.add(box(0.02, WIN_Y1-WIN_Y0, T, M.paint, WIN_X1-0.01, (WIN_Y0+WIN_Y1)/2, wz));
+
+  /* 云石窗台 — 3 m marble window board, projecting into the room */
+  shell.add(box(WIN_X1-WIN_X0, MARBLE, 0.30, M.marble, 0, WIN_Y0-MARBLE/2, Z1-0.12));
+  shell.add(box(WIN_X1-WIN_X0, 0.05, 0.03, M.marble, 0, WIN_Y0-0.025, Z1-0.255));  // 滴水線
 
   const frame = new THREE.Group();
-  const fx = X0 - 0.015;
-  frame.add(box(0.05, 0.05, 1.84, M.alu, fx, 2.185, 0));
-  frame.add(box(0.05, 0.05, 1.84, M.alu, fx, 0.885, 0));
-  frame.add(box(0.05, 1.36, 0.05, M.alu, fx, 1.545, -0.92));
-  frame.add(box(0.05, 1.36, 0.05, M.alu, fx, 1.545,  0.92));
-  frame.add(box(0.04, 1.30, 0.035, M.alu, fx, 1.545, 0));       // centre mullion
-  frame.add(box(0.04, 0.035, 1.84, M.alu, fx, 1.78, 0));        // transom
+  const fz = Z1 - 0.015;
+  frame.add(box(2.90, 0.05, 0.05, M.alu, 0, 2.235, fz));
+  frame.add(box(2.90, 0.05, 0.05, M.alu, 0, 0.885, fz));
+  frame.add(box(0.05, 1.36, 0.05, M.alu, -1.475, 1.56, fz));
+  frame.add(box(0.05, 1.36, 0.05, M.alu,  1.475, 1.56, fz));
+  [-0.49, 0.49].forEach(x => frame.add(box(0.04, 1.30, 0.035, M.alu, x, 1.56, fz)));  // mullions
+  frame.add(box(2.90, 0.035, 0.04, M.alu, 0, 1.80, fz));                              // transom
   /* glass */
-  const g = new THREE.Mesh(new THREE.PlaneGeometry(1.84, 1.36), M.glass);
-  g.geometry.rotateY(Math.PI/2);
-  g.position.set(fx, 1.545, 0);
+  const g = new THREE.Mesh(new THREE.PlaneGeometry(2.90, 1.36), M.glass);
+  g.position.set(0, 1.56, fz);
   frame.add(g);
-  /* security grille */
-  [-0.72, -0.24, 0.24, 0.72].forEach(z => frame.add(box(0.015, 1.32, 0.015, M.steelDark, X0-0.005, 1.545, z)));
-  [1.20, 1.90].forEach(y => frame.add(box(0.015, 0.015, 1.86, M.steelDark, X0-0.005, y, 0)));
+  /* security grille (as in the photo) */
+  [-1.20, -0.60, 0.0, 0.60, 1.20].forEach(x => frame.add(box(0.015, 1.32, 0.015, M.steelDark, x, 1.56, Z1-0.005)));
+  [1.20, 1.90].forEach(y => frame.add(box(2.96, 0.015, 0.015, M.steelDark, 0, y, Z1-0.005)));
   shell.add(frame);
 
   /* curtain rod + finials */
-  const rod = cyl(0.012, 0.012, 2.54, M.brass, X0+0.10, 2.30, 0);
-  rod.rotation.x = Math.PI/2;
+  const rod = cyl(0.012, 0.012, 3.54, M.brass, 0, 2.32, Z1-0.10, 12);
+  rod.rotation.z = Math.PI/2;
   shell.add(rod);
-  shell.add(sphere(0.022, M.brass, X0+0.10, 2.30, -1.27));
-  shell.add(sphere(0.022, M.brass, X0+0.10, 2.30,  1.27));
+  shell.add(sphere(0.022, M.brass, -1.77, 2.32, Z1-0.10));
+  shell.add(sphere(0.022, M.brass,  1.77, 2.32, Z1-0.10));
 }
 
-/* sheer curtains — vertex-waved planes (animated) */
+/* sheer curtains — vertex-waved planes (animated), parked at the ends */
 const curtains = [];
-[-0.98, 0.98].forEach(zc=>{
-  const g = new THREE.PlaneGeometry(0.62, 1.42, 26, 1);
-  g.rotateY(Math.PI/2);
+[-1.24, 1.24].forEach(xc=>{
+  const g = new THREE.PlaneGeometry(0.70, 1.44, 26, 1);
   const m = new THREE.Mesh(g, M.curtain);
-  m.position.set(X0+0.105, 1.585, zc);
+  m.position.set(xc, 1.60, Z1-0.105);
   const pos = g.attributes.position;
   const baseX = new Float32Array(pos.count);
-  const baseZ = new Float32Array(pos.count);
-  for(let i=0;i<pos.count;i++){ baseX[i] = 0; baseZ[i] = pos.getZ(i); }
-  curtains.push({ mesh:m, pos, baseZ, phase: zc*3.0 });
+  for(let i=0;i<pos.count;i++) baseX[i] = pos.getX(i);
+  curtains.push({ mesh:m, pos, baseX, phase: xc*3.0 });
   m.castShadow = false; m.receiveShadow = false;
   shell.add(m);
 });
 
 /* =====================================================================
-   3 · DOORS — main door, bathroom folding door, kitchen slider
+   3 · DOORS — 廚房門 + 廁所門 (both on the TV wall) and the main door (east)
    ===================================================================== */
 
-/* --- main door (walnut) --- */
+/* --- 廚房門 · kitchen doorway, west end of the TV wall (light-oak frame) --- */
 {
   const g = new THREE.Group();
-  const dz = Z0 - T/2;
-  g.add(box(0.06, 2.06, 0.16, M.walnut, -0.10, 1.03, dz));
-  g.add(box(0.06, 2.06, 0.16, M.walnut,  0.84, 1.03, dz));
-  g.add(box(0.94, 0.08, 0.16, M.walnut,  0.37, 2.10, dz));
-  g.add(box(0.84, 2.04, 0.045, M.walnut, 0.37, 1.02, dz+0.015));
-  /* grooves + hardware */
-  g.add(box(0.012, 1.86, 0.01, std({color:0x2f2218, roughness:0.8}), 0.18, 1.02, dz+0.04));
-  g.add(box(0.012, 1.86, 0.01, std({color:0x2f2218, roughness:0.8}), 0.56, 1.02, dz+0.04));
-  const hbar = cyl(0.011, 0.011, 0.13, M.steel, 0.735, 1.02, dz+0.06);
-  g.add(hbar);
-  g.add(cyl(0.02, 0.02, 0.012, M.steel, 0.735, 0.98, dz+0.045).rotateX(Math.PI/2));
-  g.add(cyl(0.02, 0.02, 0.012, M.steel, 0.735, 1.06, dz+0.045).rotateX(Math.PI/2));
-  g.add(sphere(0.012, M.brass, 0.37, 1.56, dz+0.04));    // peephole
-  g.add(box(0.90, 0.02, 0.15, std({color:0x4a3a2a, roughness:0.9}), 0.37, 0.01, dz+0.02)); // threshold
+  const z = Z0 - T/2;
+  g.add(box(0.06, 2.06, T+0.03, M.oakPale, KD0+0.03, 1.03, z));
+  g.add(box(0.06, 2.06, T+0.03, M.oakPale, KD1-0.03, 1.03, z));
+  g.add(box(KD1-KD0, 0.08, T+0.03, M.oakPale, (KD0+KD1)/2, 2.10, z));
+  g.add(box(KD1-KD0+0.06, 0.025, 0.24, M.oakPale, (KD0+KD1)/2, 0.012, Z0+0.01));   // 門檻
+  /* leaf parked open against the kitchen wall */
+  const hinge = new THREE.Group();
+  hinge.position.set(KD1-0.03, 0, Z0-0.04);
+  hinge.rotation.y = 96*DEG;
+  hinge.add(box(0.66, 2.00, 0.04, M.whiteGloss, -0.33, 1.00, 0));
+  hinge.add(cyl(0.010, 0.010, 0.13, M.steel, -0.60, 1.00, 0.05, 10));
+  g.add(hinge);
   shell.add(g);
 }
 
-/* --- bathroom folding door (white), half open --- */
+/* --- 廁所門 · toilet doorway, east end of the TV wall --- */
 {
   const g = new THREE.Group();
-  const dz = Z0 - T/2;
-  g.add(box(0.05, 2.04, 0.15, M.whiteSatin, -1.985, 1.02, dz));
-  g.add(box(0.05, 2.04, 0.15, M.whiteSatin, -1.215, 1.02, dz));
-  g.add(box(0.82, 0.07, 0.15, M.whiteSatin, -1.60, 2.065, dz));
-  const p1 = box(0.35, 1.98, 0.035, M.whiteGloss, -1.60+0.175, 0.99, dz+0.02);
-  g.add(p1);
-  const hinge2 = new THREE.Group(); hinge2.position.set(-1.25, 0, dz+0.02);
-  hinge2.rotation.y = -68*DEG;
-  const p2 = box(0.35, 1.98, 0.035, M.whiteGloss, -0.175, 0.99, 0);
-  hinge2.add(p2);
-  hinge2.add(cyl(0.008, 0.008, 0.24, M.steel, -0.345, 1.02, 0.035));
-  g.add(hinge2);
+  const z = Z0 - T/2;
+  /* frame */
+  g.add(box(0.06, 2.04, T+0.02, M.walnut, TD0+0.03, 1.02, z));
+  g.add(box(0.06, 2.04, T+0.02, M.walnut, TD1-0.03, 1.02, z));
+  g.add(box(TD1-TD0, 0.07, T+0.02, M.walnut, (TD0+TD1)/2, 2.075, z));
+  /* leaf, half open into the room */
+  const hinge = new THREE.Group();
+  hinge.position.set(TD0+0.03, 0, Z0-0.03);
+  hinge.rotation.y = -62*DEG;
+  hinge.add(box(0.62, 1.98, 0.04, M.whiteSatin, 0.31, 0.99, 0));
+  hinge.add(box(0.40, 1.30, 0.012, M.mirror, 0.31, 1.28, 0.026));    // mirror panel
+  hinge.add(cyl(0.011, 0.011, 0.13, M.steel, 0.56, 0.99, 0.05, 10));
+  g.add(hinge);
   shell.add(g);
 }
 
-/* --- kitchen sliding door (aluminium + frosted glass) --- */
+/* --- main door (walnut) on the EAST wall --- */
 {
   const g = new THREE.Group();
-  const dz = Z0 - T/2;
-  g.add(box(0.05, 2.06, 0.13, M.alu,  0.975, 1.03, dz));
-  g.add(box(0.05, 2.06, 0.13, M.alu,  1.785, 1.03, dz));
-  g.add(box(0.96, 0.06, 0.13, M.alu,  1.38, 2.09, dz));
-  /* one panel, parked over the west half — the east half stays open */
-  const panel = new THREE.Group();
-  panel.add(box(0.04, 1.96, 0.04, M.alu, 0.02, 0, 0));
-  panel.add(box(0.04, 1.96, 0.04, M.alu, 0.02, 0, -0.40));
-  panel.add(box(0.82, 0.05, 0.04, M.alu, -0.20, 0.955, 0));
-  panel.add(box(0.82, 0.05, 0.04, M.alu, -0.20, -0.955, 0));
-  const gl = new THREE.Mesh(new THREE.PlaneGeometry(0.78, 1.88), M.frosted);
-  gl.geometry.rotateY(Math.PI/2);
-  gl.position.set(0.02, 0, -0.20);
-  panel.add(gl);
-  panel.position.set(1.42, 1.02, dz+0.03);
-  g.add(panel);
+  const dx = X1 + T/2;
+  g.add(box(T+0.03, 2.06, 0.06, M.walnut, dx, 1.03, ED0+0.03));
+  g.add(box(T+0.03, 2.06, 0.06, M.walnut, dx, 1.03, ED1-0.03));
+  g.add(box(T+0.03, 0.08, ED1-ED0+0.12, M.walnut, dx, 2.10, (ED0+ED1)/2));
+  g.add(box(T+0.06, 0.02, ED1-ED0, std({color:0x4a3a2a, roughness:0.9}), dx, 0.01, (ED0+ED1)/2));
+  const hinge = new THREE.Group();
+  hinge.position.set(X1-0.02, 0, ED1-0.03);
+  hinge.rotation.y = Math.PI/2 + 20*DEG;
+  hinge.add(box(0.82, 2.02, 0.045, M.walnut, 0.41, 1.01, 0));
+  hinge.add(box(0.012, 1.84, 0.012, std({color:0x2f2218, roughness:0.8}), 0.20, 1.01, -0.03));
+  hinge.add(box(0.012, 1.84, 0.012, std({color:0x2f2218, roughness:0.8}), 0.62, 1.01, -0.03));
+  hinge.add(cyl(0.011, 0.011, 0.13, M.steel, 0.74, 1.01, -0.05, 10));
+  hinge.add(sphere(0.012, M.brass, 0.41, 1.54, -0.03));                  // 防盜眼
+  g.add(hinge);
   shell.add(g);
 }
 
@@ -542,35 +580,35 @@ const curtains = [];
 {
   /* facade masses above / below the window opening (we're on a high floor) */
   const ext = new THREE.Group();
-  ext.add(box(0.7, 21.5, 3.7, M.concrete, X0-0.35, -9.9, 0));
-  ext.add(box(0.7, 21.5, 3.7, M.concrete, X0-0.35, 13.1, 0));
-  ext.add(box(0.7, 21.5, 0.5, M.concrete, X0-0.35, 1.575, -1.85));
-  ext.add(box(0.7, 21.5, 0.5, M.concrete, X0-0.35, 1.575,  1.85));
+  ext.add(box(3.7, 21.5, 0.7, M.concrete, 0, -9.9, Z1+0.35));
+  ext.add(box(3.7, 21.5, 0.7, M.concrete, 0, 13.1, Z1+0.35));
+  ext.add(box(0.5, 21.5, 0.7, M.concrete, -1.85, 1.575, Z1+0.35));
+  ext.add(box(0.5, 21.5, 0.7, M.concrete,  1.85, 1.575, Z1+0.35));
   scene.add(ext);
 
-  /* distant city towers (west) */
+  /* distant city towers (south, seen through the living-room window) */
   const city = new THREE.Group();
   const bmat = std({ color:0xa8b6c2, roughness:0.9 });
   const dimBmat = [{ m:bmat, day:new THREE.Color(0xa8b6c2), night:new THREE.Color(0x111a26) }];
   const wins = [];
   for(let i=0; i<26; i++){
     const w = rr(3, 7.5), d = rr(3, 7), hgt = rr(7, 30);
-    const bx = rr(-72, -16), bz = rr(-34, 30), by = -16 + hgt/2;
+    const bx = rr(-34, 30), bz = rr(16, 72), by = -16 + hgt/2;
     const b = box(w, hgt, d, bmat, bx, by, bz);
     b.matrixAutoUpdate = false; b.updateMatrix();
     city.add(b);
-    /* window quads on the east face (facing us) */
+    /* window quads on the north face (facing us) */
     const cols = Math.floor(w/1.15), rows = Math.floor(hgt/1.35);
     for(let c=0;c<cols && wins.length<2200;c++){
       for(let r=0;r<rows;r++){
         if(rnd() < 0.42) continue;
-        wins.push({ x:bx + w/2 + 0.03, y: by - hgt/2 + 0.9 + r*1.35, z: bz - d/2 + 0.7 + c*1.15 });
+        wins.push({ x: bx - w/2 + 0.7 + c*1.15, y: by - hgt/2 + 0.9 + r*1.35, z: bz - d/2 - 0.03 });
       }
     }
   }
   scene.add(city);
   const wgeo = new THREE.PlaneGeometry(0.5, 0.72);
-  wgeo.rotateY(Math.PI/2);
+  wgeo.rotateY(Math.PI);
   const wInst = new THREE.InstancedMesh(wgeo, M_cityWin, wins.length);
   const dm = new THREE.Object3D();
   wins.forEach((p,i)=>{ dm.position.set(p.x, p.y, p.z); dm.updateMatrix(); wInst.setMatrixAt(i, dm.matrix); });
@@ -582,73 +620,79 @@ const curtains = [];
 /* =====================================================================
    5 · ADJACENT ROOMS glimpsed through open doors
    ===================================================================== */
-/* --- mini galley kitchen (beyond the north-east doorway) --- */
+/* --- mini galley kitchen (beyond the north-WEST 廚房門) --- */
 {
   const K = new THREE.Group();
-  const x0 = 0.62, x1 = 2.20, z0 = -2.95, z1 = Z0;   // interior volume
-  K.add(box(x1-x0, 0.02, z1-z0, M.tileLight, (x0+x1)/2, FL, (z0+z1)/2));
+  const x0 = -2.60, x1 = -0.90, z0 = -2.95, z1 = Z0;   // interior volume
+  const cx = (x0+x1)/2;
+  K.add(box(x1-x0, 0.02, z1-z0, M.tileLight, cx, FL, (z0+z1)/2));
   K.add(box(x1-x0, 0.1, z1-z0, M.ceil, (x0+x1)/2, 2.40+0.05, (z0+z1)/2));
   K.add(box(x1-x0+0.2, 2.5, 0.1, M.bathWall, (x0+x1)/2, 1.25, z0-0.05));      // far wall
   K.add(box(0.1, 2.5, z1-z0+0.2, M.bathWall, x0-0.05, 1.25, (z0+z1)/2));
   K.add(box(0.1, 2.5, z1-z0+0.2, M.bathWall, x1+0.05, 1.25, (z0+z1)/2));
   /* counter run along the far wall */
-  K.add(box(1.5, 0.84, 0.58, M.whiteGloss, 1.42, 0.42, z0+0.34));
-  K.add(box(1.54, 0.04, 0.62, M.oakPale, 1.42, 0.86, z0+0.33));
-  K.add(box(1.5, 0.5, 0.02, M.steel, 1.42, 1.13, z0+0.06));
+  K.add(box(1.5, 0.84, 0.58, M.whiteGloss, cx, 0.42, z0+0.34));
+  K.add(box(1.54, 0.04, 0.62, M.oakPale, cx, 0.86, z0+0.33));
+  K.add(box(1.5, 0.5, 0.02, M.steel, cx, 1.13, z0+0.06));
   /* sink + faucet */
-  K.add(box(0.4, 0.02, 0.32, M.steelDark, 1.90, 0.875, z0+0.33));
-  K.add(cyl(0.012,0.012,0.2,M.steel, 1.90, 0.98, z0+0.52));
-  K.add(box(0.02, 0.02, 0.16, M.steel, 1.90, 1.07, z0+0.45));
+  K.add(box(0.4, 0.02, 0.32, M.steelDark, cx+0.48, 0.875, z0+0.33));
+  K.add(cyl(0.012,0.012,0.2,M.steel, cx+0.48, 0.98, z0+0.52));
+  K.add(box(0.02, 0.02, 0.16, M.steel, cx+0.48, 1.07, z0+0.45));
   /* gas hob + wok (as in the reference photo) */
-  K.add(box(0.56, 0.012, 0.4, M.black, 1.08, 0.872, z0+0.33));
+  K.add(box(0.56, 0.012, 0.4, M.black, cx-0.34, 0.872, z0+0.33));
   const wok = new THREE.Mesh(new THREE.SphereGeometry(0.13, 18, 10, 0, Math.PI*2, 0, 1.25), M.steelDark);
-  wok.rotation.x = Math.PI; wok.position.set(1.08, 0.99, z0+0.33); K.add(wok);
-  K.add(cyl(0.015,0.015,0.16,M.black, 1.22, 1.02, z0+0.33).rotateZ(-1.2));
+  wok.rotation.x = Math.PI; wok.position.set(cx-0.34, 0.99, z0+0.33); K.add(wok);
+  K.add(cyl(0.015,0.015,0.16,M.black, cx-0.20, 1.02, z0+0.33).rotateZ(-1.2));
   /* upper cabinets + hood + microwave */
-  K.add(box(1.5, 0.62, 0.34, M.whiteGloss, 1.42, 1.82, z0+0.22));
-  K.add(box(0.6, 0.34, 0.42, M.steel, 1.08, 1.42, z0+0.26));
-  K.add(box(0.42, 0.26, 0.3, M.black, 1.62, 1.38, z0+0.24));
-  K.add(box(1.5, 0.02, 0.04, M_glowKitch, 1.42, 1.50, z0+0.36));   // under-cabinet strip
+  K.add(box(1.5, 0.62, 0.34, M.whiteGloss, cx, 1.82, z0+0.22));
+  K.add(box(0.6, 0.34, 0.42, M.steel, cx-0.34, 1.42, z0+0.26));
+  K.add(box(0.42, 0.26, 0.3, M.black, cx+0.20, 1.38, z0+0.24));
+  K.add(box(1.5, 0.02, 0.04, M_glowKitch, cx, 1.50, z0+0.36));   // under-cabinet strip
+  /* 廚房抽氣扇 — kitchen exhaust fan on the far wall (from the sketch) */
+  K.add(box(0.36, 0.36, 0.03, M.whiteSatin, cx, 2.06, z0+0.03));
+  for(let i=-1;i<=1;i++) K.add(box(0.30, 0.018, 0.012, M.matteGray, cx, 2.06+i*0.09, z0+0.05));
+  for(let i=-1;i<=1;i++) K.add(box(0.018, 0.30, 0.012, M.matteGray, cx+i*0.09, 2.06, z0+0.05));
   /* washing machine under the counter (photo) */
-  K.add(box(0.56, 0.8, 0.56, M.whiteSatin, 1.42, 0.41, z0+0.33));
-  const wdoor = cyl(0.17, 0.17, 0.03, M.steel, 1.42, 0.42, z0+0.62, 24);
+  K.add(box(0.56, 0.8, 0.56, M.whiteSatin, cx, 0.41, z0+0.33));
+  const wdoor = cyl(0.17, 0.17, 0.03, M.steel, cx, 0.42, z0+0.62, 24);
   wdoor.rotation.x = Math.PI/2; K.add(wdoor);
-  K.add(box(0.3, 0.05, 0.02, M.black, 1.42, 0.74, z0+0.61));
+  K.add(box(0.3, 0.05, 0.02, M.black, cx, 0.74, z0+0.61));
   /* fridge */
-  K.add(box(0.6, 1.72, 0.6, std({ color:0xc9ccce, roughness:0.35, metalness:0.6 }), 1.86, 0.86, -2.05));
-  K.add(box(0.02, 1.0, 0.04, M.steel, 1.55, 0.75, -1.90));
-  K.add(box(0.02, 1.0, 0.04, M.steel, 1.55, 0.95, -2.20));
+  K.add(box(0.6, 1.72, 0.6, std({ color:0xc9ccce, roughness:0.35, metalness:0.6 }), cx+0.44, 0.86, -2.05));
+  K.add(box(0.02, 1.0, 0.04, M.steel, cx+0.13, 0.75, -1.90));
+  K.add(box(0.02, 1.0, 0.04, M.steel, cx+0.13, 0.95, -2.20));
   /* ceiling lamp + door mat */
-  K.add(cyl(0.09, 0.09, 0.03, M_glowKitch, 1.42, 2.42, -2.2, 24));
+  K.add(cyl(0.09, 0.09, 0.03, M_glowKitch, cx, 2.42, -2.2, 24));
   const mat = roundedBox(0.5, 0.012, 0.3, 0.05, std({ color:0x6f9fd8, roughness:1 }));
-  mat.position.set(1.38, FL+0.007, -1.62); K.add(mat);
+  mat.position.set(cx, FL+0.007, -1.62); K.add(mat);
   shadows(K); scene.add(K);
 }
 
-/* --- mini bathroom (beyond the north-west folding door) --- */
+/* --- mini bathroom (beyond the north-EAST 廁所門) --- */
 {
   const B = new THREE.Group();
-  const x0 = -2.30, x1 = -0.90, z0 = -2.65, z1 = Z0;
+  const x0 = 1.05, x1 = 2.45, z0 = -2.75, z1 = Z0;
+  const cx = 1.75;
   B.add(box(x1-x0, 0.02, z1-z0, M.tileBath, (x0+x1)/2, FL, (z0+z1)/2));
   B.add(box(x1-x0, 0.1, z1-z0, M.ceil, (x0+x1)/2, 2.35, (z0+z1)/2));
   B.add(box(x1-x0+0.2, 2.4, 0.1, M.bathWall, (x0+x1)/2, 1.2, z0-0.05));
   B.add(box(0.1, 2.4, z1-z0+0.2, M.bathWall, x0-0.05, 1.2, (z0+z1)/2));
   B.add(box(0.1, 2.4, z1-z0+0.2, M.bathWall, x1+0.05, 1.2, (z0+z1)/2));
   /* tile accent band */
-  B.add(box(1.2, 0.45, 0.02, std({ color:0xa8c8c0, roughness:0.3 }), -1.60, 1.25, z0+0.06));
+  B.add(box(1.2, 0.45, 0.02, std({ color:0xa8c8c0, roughness:0.3 }), cx, 1.25, z0+0.06));
   /* vanity + basin + mirror */
-  B.add(box(0.86, 0.06, 0.44, M.oak, -1.60, 0.80, z0+0.30));
-  B.add(roundedBox(0.42, 0.1, 0.3, 0.05, M.ceramic).translateX(-1.60).translateY(0.885).translateZ(z0+0.28));
-  B.add(cyl(0.012,0.012,0.16,M.steel, -1.60, 0.95, z0+0.42));
-  B.add(box(0.02, 0.02, 0.14, M.steel, -1.60, 1.02, z0+0.36));
-  B.add(cyl(0.18, 0.18, 0.02, M.mirror, -1.60, 1.50, z0+0.07, 28).rotateX(Math.PI/2));
+  B.add(box(0.86, 0.06, 0.44, M.oak, cx, 0.80, z0+0.30));
+  B.add(roundedBox(0.42, 0.1, 0.3, 0.05, M.ceramic).translateX(cx).translateY(0.885).translateZ(z0+0.28));
+  B.add(cyl(0.012,0.012,0.16,M.steel, cx, 0.95, z0+0.42));
+  B.add(box(0.02, 0.02, 0.14, M.steel, cx, 1.02, z0+0.36));
+  B.add(cyl(0.18, 0.18, 0.02, M.mirror, cx, 1.50, z0+0.07, 28).rotateX(Math.PI/2));
   /* toilet */
-  B.add(box(0.18, 0.44, 0.42, M.ceramic, -2.18, 0.22, -1.85));
-  B.add(roundedBox(0.40, 0.34, 0.34, 0.06, M.ceramic).translateX(-1.92).translateY(0.19).translateZ(-1.85));
+  B.add(box(0.18, 0.44, 0.42, M.ceramic, cx-0.58, 0.22, z0+0.90));
+  B.add(roundedBox(0.40, 0.34, 0.34, 0.06, M.ceramic).translateX(cx-0.32).translateY(0.19).translateZ(z0+0.90));
   const seat = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.035, 10, 22), M.ceramic);
-  seat.rotation.x = Math.PI/2; seat.position.set(-1.95, 0.40, -1.85); B.add(seat);
-  B.add(cyl(0.14, 0.14, 0.02, M.ceramic, -1.95, 0.42, -1.98, 24));
-  B.add(cyl(0.08, 0.08, 0.02, M_glowBath, -1.60, 2.29, -1.9, 24));
+  seat.rotation.x = Math.PI/2; seat.position.set(cx-0.35, 0.40, z0+0.90); B.add(seat);
+  B.add(cyl(0.14, 0.14, 0.02, M.ceramic, cx-0.35, 0.42, z0+0.77, 24));
+  B.add(cyl(0.08, 0.08, 0.02, M_glowBath, cx, 2.29, z0+0.85, 24));
   shadows(B); scene.add(B);
 }
 
@@ -692,6 +736,9 @@ const furn = new THREE.Group(); furn.position.y = FL; scene.add(furn);
   /* folded knit throw on the south arm */
   S.add(roundedBox(0.30, 0.05, 0.46, 0.02, M.cushionCrm).translateX(-1.40).translateY(0.585).translateZ(bz+0.67));
   S.add(roundedBox(0.05, 0.26, 0.46, 0.02, M.cushionCrm).translateX(-1.02).translateY(0.45).translateZ(bz+0.67));
+  /* back to the south window, facing the TV wall */
+  S.rotation.y = Math.PI/2;
+  S.position.set(0.30, 0, -0.58);
   shadows(S); furn.add(S);
 }
 
@@ -719,7 +766,7 @@ const cat = new THREE.Group();
   ]);
   const tail = new THREE.Mesh(new THREE.TubeGeometry(curve, 20, 0.024, 8, false), M.catFur);
   cat.add(tail);
-  cat.position.set(-0.42, 0.36, -0.62);
+  cat.position.set(0.86, 0.36, 0.00);
   cat.rotation.y = -0.4;
   shadows(cat); furn.add(cat);
 }
@@ -731,79 +778,108 @@ const cat = new THREE.Group();
   [[-0.22,-0.17],[0.22,-0.17],[-0.22,0.17],[0.22,0.17]].forEach(([x,z])=>{
     O.add(cyl(0.014, 0.012, 0.06, M.walnut, x, 0.03, z, 10));
   });
-  O.position.set(-0.42, 0, -0.62); O.rotation.y = 0.12;
+  O.position.set(0.86, 0, 0.00); O.rotation.y = 0.12;
   shadows(O); furn.add(O);
 }
 
-/* ---------- round coffee table + objects ---------- */
-{
-  const C = new THREE.Group();
-  C.add(cyl(0.42, 0.42, 0.035, M.oak, 0, 0.36, 0, 36));
-  for(let i=0;i<3;i++){
-    const a = i*2.094 + 0.5;
-    const leg = cyl(0.011, 0.011, 0.36, M.steelDark, Math.cos(a)*0.30, 0.18, Math.sin(a)*0.30, 10);
-    leg.rotation.z = -Math.cos(a)*0.24; leg.rotation.x = Math.sin(a)*0.24;
-    C.add(leg);
-  }
-  /* books + mug + bowl */
-  C.add(box(0.22, 0.025, 0.16, std({color:0x8a9aa8, roughness:0.8}), 0.06, 0.39, 0.10).rotateY(0.3));
-  C.add(box(0.20, 0.022, 0.15, std({color:0xd8cfc0, roughness:0.8}), 0.05, 0.412, 0.105).rotateY(0.45));
-  const mug = cyl(0.037, 0.032, 0.09, M.ceramic, -0.16, 0.425, -0.04, 18);
-  C.add(mug);
-  const hnd = new THREE.Mesh(new THREE.TorusGeometry(0.028, 0.007, 8, 16), M.ceramic);
-  hnd.position.set(-0.115, 0.425, -0.04); C.add(hnd);
-  C.add(cyl(0.07, 0.05, 0.035, M.walnut, -0.14, 0.395, 0.20, 20));   // small bowl
-  C.position.set(-0.42, 0, 0.45);
-  shadows(C); furn.add(C);
-}
-
-/* ---------- rug ---------- */
+/* ---------- rug (no coffee table in this room) ---------- */
 {
   const R = new THREE.Group();
   R.add(roundedBox(1.62, 0.012, 1.42, 0.09, M.rugBase));
-  R.add(roundedBox(1.30, 0.012, 0.14, 0.05, M.rugBand).translateZ(0));
-  R.add(roundedBox(0.5, 0.012, 0.14, 0.05, M.rugBand).translateZ(-0.52));
-  R.add(roundedBox(0.5, 0.012, 0.14, 0.05, M.rugBand).translateZ(0.52));
-  R.position.set(-0.40, 0.006, 0.30);
+  R.add(roundedBox(1.30, 0.012, 0.14, 0.05, M.rugBand).translateY(0.004));
+  R.add(roundedBox(0.5, 0.012, 0.14, 0.05, M.rugBand).translateY(0.004).translateZ(-0.52));
+  R.add(roundedBox(0.5, 0.012, 0.14, 0.05, M.rugBand).translateY(0.004).translateZ(0.52));
+  R.position.set(0.55, 0.006, -0.12);
   R.rotation.y = 0.02;
   R.children.forEach(c=>{ c.castShadow=false; c.receiveShadow=true; });
   furn.add(R);
 }
 
-/* ---------- floating "中空櫃" TV console (hollow middle) on the east wall ---------- */
-{
-  const T_ = new THREE.Group();
-  const cx = X1 - 0.21;                 // console centre x
-  const cz = -0.55;
-  T_.add(box(0.38, 0.028, 1.50, M.oak, cx, 0.605, cz));                  // top
-  T_.add(box(0.38, 0.028, 1.50, M.oak, cx, 0.275, cz));                  // bottom
-  T_.add(box(0.36, 0.30, 0.44, M.oak, cx, 0.44, cz-0.53));               // west closed box
-  T_.add(box(0.36, 0.30, 0.44, M.oak, cx, 0.44, cz+0.53));               // east closed box
-  T_.add(box(0.015, 0.28, 0.40, M.oakPale, cx-0.18, 0.44, cz-0.53));     // door faces
-  T_.add(box(0.015, 0.28, 0.40, M.oakPale, cx-0.18, 0.44, cz+0.53));
-  T_.add(sphere(0.011, M.brass, cx-0.20, 0.44, cz-0.40));
-  T_.add(sphere(0.011, M.brass, cx-0.20, 0.44, cz+0.40));
-  T_.add(box(0.02, 0.28, 0.60, M.oak, cx+0.17, 0.44, cz));               // hollow back
-  T_.add(box(0.32, 0.016, 0.58, M.oak, cx, 0.44, cz));                   // middle shelf
-  /* hollow-middle contents */
-  T_.add(box(0.20, 0.032, 0.135, M.black, cx-0.02, 0.302, cz-0.16));     // router
-  T_.add(cyl(0.004,0.004,0.10,M.black, cx-0.09, 0.36, cz-0.19).rotateZ(0.5));
-  T_.add(cyl(0.004,0.004,0.10,M.black, cx-0.05, 0.36, cz-0.13).rotateZ(0.25));
-  T_.add(box(0.02, 0.028, 0.17, std({color:0x8a6f5a, roughness:0.85}), cx-0.06, 0.465, cz+0.12));
-  const succulent = new THREE.Group();
-  succulent.add(cyl(0.045, 0.035, 0.07, M.terracotta, 0, 0.035, 0, 16));
-  succulent.add(sphere(0.045, M.leafB, 0, 0.10, 0, 12));
-  succulent.add(sphere(0.03, M.leafC, 0.03, 0.13, 0.01, 10));
-  succulent.position.set(cx-0.04, 0.44+0.008, cz+0.22);
-  T_.add(succulent);
-  T_.add(box(0.05, 0.016, 0.16, M.matteGray, cx-0.10, 0.46, cz+0.42));   // remote
-  /* under-cabinet glow */
-  T_.add(box(0.02, 0.012, 1.42, M_glowStrip, cx-0.02, 0.252, cz));
-  shadows(T_); furn.add(T_);
+/* =====================================================================
+   電視牆 TV WALL (north) — built to the sketch (images/tv_cabinet.jpg):
+   廚房門 │ 中空櫃 │ 白色飾牆+冷氣窗+電視+電視櫃 │ 廁門貨架 │ 廁所門
+   ===================================================================== */
 
-  /* TV */
+/* ---------- 中空櫃 — tall cabinet beside the 廚房門 (glass top, open shoe rack) ---------- */
+{
+  const C = new THREE.Group();
+  const cxc = (TC0+TC1)/2, back = Z0+0.015, DP = 0.36, W = 0.46;
+  C.add(box(W, 2.30, 0.02, M.walnut, cxc, 1.15, back+0.01));                  // 背板
+  C.add(box(0.02, 2.30, DP, M.walnut, cxc-W/2, 1.15, back+DP/2));             // 側板
+  C.add(box(0.02, 2.30, DP, M.walnut, cxc+W/2, 1.15, back+DP/2));
+  C.add(box(W+0.04, 0.03, DP+0.02, M.walnut, cxc, 2.30, back+DP/2));          // 頂板
+  C.add(box(W+0.04, 0.08, DP+0.02, M.walnut, cxc, 0.04, back+DP/2));          // 地腳
+  /* 中空 — the hollow open section: shoe rack */
+  [0.32, 0.56, 0.80].forEach(y=> C.add(box(W-0.04, 0.022, DP-0.03, M.oakPale, cxc, y, back+DP/2)));
+  [[-0.09, 0.02, 0xe8e5e0],[0.07, 0.09, 0xe4c6cf],[-0.02, 0.30, 0xdfe2e4]].forEach(([dx,dz,col])=>{
+    const sh = roundedBox(0.19, 0.055, 0.075, 0.02, std({ color:col, roughness:0.9 }));
+    sh.position.set(cxc+dx, 0.355+(dz>0.2?0.24:0), back+DP/2+dz);
+    C.add(sh);
+  });
+  C.add(box(W-0.04, 0.03, DP-0.02, M.walnut, cxc, 1.03, back+DP/2));          // 中段橫板
+  C.add(box(W-0.04, 0.02, DP-0.02, M.walnut, cxc, 1.18, back+DP/2));
+  /* 玻璃門公仔櫃 above */
+  const gy0 = 1.21, gy1 = 2.28, dz = back+DP-0.02;
+  C.add(box(0.012, gy1-gy0-0.06, DP-0.06, M.glass, cxc-0.005, (gy0+gy1)/2, back+DP-0.03));
+  C.add(box(W-0.01, 0.03, 0.022, M.walnut, cxc, gy1-0.015, dz));
+  C.add(box(W-0.01, 0.03, 0.022, M.walnut, cxc, gy0+0.015, dz));
+  C.add(box(0.026, gy1-gy0, 0.022, M.walnut, cxc-(W-0.06)/2, (gy0+gy1)/2, dz));
+  C.add(box(0.026, gy1-gy0, 0.022, M.walnut, cxc+(W-0.06)/2, (gy0+gy1)/2, dz));
+  C.add(box(0.012, gy1-gy0, 0.022, M.walnut, cxc, (gy0+gy1)/2, dz));          // 門縫
+  C.add(box(W-0.06, 0.014, DP-0.09, M.glass, cxc, 1.60, back+DP/2));          // 玻璃層板
+  C.add(box(W-0.06, 0.014, DP-0.09, M.glass, cxc, 1.93, back+DP/2));
+  C.add(box(W-0.10, 0.012, 0.02, M_glowCab, cxc, 2.24, back+0.10));           // LED
+  /* 公仔 */
+  [[1.49,0xa8c8b8],[1.49,0xe0a08c],[1.82,0xe8d8a8],[1.82,0x7a8fa8],[2.12,0xd8b870]].forEach(([y,col],i)=>{
+    const f = new THREE.Group();
+    const dm = std({ color:col, roughness:0.6 });
+    const body = sphere(0.030, dm, 0, 0.036, 0, 12); body.scale.set(1, 1.3, 1); f.add(body);
+    f.add(sphere(0.026, dm, 0, 0.093, 0, 12));
+    f.add(sphere(0.007, std({color:0x2a2018, roughness:0.5}), -0.011, 0.098, 0.024, 8));
+    f.add(sphere(0.007, std({color:0x2a2018, roughness:0.5}),  0.011, 0.098, 0.024, 8));
+    f.position.set(cxc - 0.13 + (i%3)*0.13, y, back + DP/2 + (i%2 ? 0.05 : -0.05));
+    f.rotation.y = rr(-0.4, 0.4);
+    C.add(f);
+  });
+  shadows(C); furn.add(C);
+}
+
+/* ---------- 白色飾牆 + 云石窗台 + 冷氣窗(窗口式冷氣) + 電視 ---------- */
+{
+  /* raised white feature panel */
+  shell.add(box(TV1-TV0, 2.30, 0.03, M.wallPanel, TVC, 1.15, Z0+0.016));
+  [TV0+0.66, TV1-0.66].forEach(x => shell.add(box(0.014, 2.30, 0.034, M.panelLine, x, 1.15, Z0+0.017)));
+
+  /* 云石窗台 — marble window board, ≈ 2 m wide, under the 冷氣窗 */
+  shell.add(box(TV1-TV0, MARBLE, 0.18, M.marble, TVC, ACY0-MARBLE/2, Z0+0.09));
+  shell.add(box(TV1-TV0, 0.05, 0.02, M.marble, TVC, ACY0-0.025, Z0+0.185));
+
+  /* 冷氣窗 reveal + 窗口式冷氣機 */
+  shell.add(box(ACW+0.06, 0.035, T+0.06, M.skirt, TVC, ACY1+0.018, Z0-T/2));
+  shell.add(box(0.035, ACY1-ACY0, T+0.06, M.skirt, ACX0-0.022, (ACY0+ACY1)/2, Z0-T/2));
+  shell.add(box(0.035, ACY1-ACY0, T+0.06, M.skirt, ACX1+0.022, (ACY0+ACY1)/2, Z0-T/2));
+  /* 窗外日光 */
+  shell.add(box(ACW, ACY1-ACY0, 0.02,
+    std({ color:0xc6d2da, roughness:1, emissive:0x9db8cc, emissiveIntensity:0.35 }),
+    TVC, (ACY0+ACY1)/2, Z0-0.26));
+  /* 窗口式冷氣機 — sits on the marble board inside the opening */
+  const ac = new THREE.Group();
+  const AH = 0.40, AW = 0.66;
+  ac.add(box(AW, AH, 0.34, M.acShell, 0, 0.215, -0.03));                              // 機身
+  ac.add(box(AW-0.05, AH-0.07, 0.02, std({ color:0x6c7176, roughness:0.8 }), 0, 0.215, 0.108));  // 出風口暗位
+  for(let i=-2;i<=2;i++) ac.add(box(AW-0.12, 0.021, 0.016, M.acGrille, 0, 0.215+i*0.053, 0.140));
+  ac.add(box(AW-0.06, 0.055, 0.022, M.white, 0, 0.052, 0.135));                       // 控制面板
+  ac.add(sphere(0.007, emissiveMat(0x33ee77, 0.8, 1.1), 0.235, 0.052, 0.148));
+  ac.add(box(0.05, 0.012, 0.006, M.matteGray, -0.20, 0.052, 0.152));                  // 牌子
+  /* 填縫板：單位兩側 + 上方 */
+  [-1, 1].forEach(s => ac.add(box(0.28, ACY1-ACY0-0.015, 0.035, M.wallPanel, s*0.49, (ACY1-ACY0)/2, -0.03)));
+  ac.add(box(ACW-0.02, 0.075, 0.035, M.wallPanel, 0, 0.4425, -0.03));
+  ac.position.set(TVC, ACY0, Z0-0.055);
+  shadows(ac); shell.add(ac);
+
+  /* 電視 — wall mounted between the TV cabinet and the 冷氣窗 */
   const TV = new THREE.Group();
-  TV.add(box(0.045, 0.70, 1.22, M.black, X1-0.034, 1.30, cz));
+  TV.add(box(1.22, 0.72, 0.045, M.black, TVC, 1.34, Z0+0.052));
   const uni = { uTime:{ value:0 }, uOn:{ value:0 } };
   const scr = new THREE.Mesh(
     new THREE.PlaneGeometry(1.16, 0.64),
@@ -828,111 +904,156 @@ const cat = new THREE.Group();
         }`
     })
   );
-  scr.geometry.rotateY(-Math.PI/2);
-  scr.position.set(X1-0.058, 1.30, cz);
+  scr.position.set(TVC, 1.34, Z0+0.076);
   TV.add(scr);
-  const led = sphere(0.006, emissiveMat(0xff4433, 0.9, 1.4), X1-0.058, 0.975, cz+0.585);
-  TV.add(led);
+  TV.add(sphere(0.006, emissiveMat(0xff4433, 0.9, 1.4), TVC+0.53, 1.03, Z0+0.077));
   window.__tvUniforms = uni;
   shadows(TV); furn.add(TV);
-
-  /* soundbar */
-  furn.add(shadows(roundedBox(0.10, 0.075, 0.9, 0.02, M.fabricChrc).translateX(cx-0.02).translateY(0.657).translateZ(cz)));
 }
 
-/* ---------- white drawer chest (east wall, from the photo) ---------- */
+/* ---------- 電視櫃 — the long low open console exactly as drawn in the sketch:
+   a thick top slab + a divided lower level forming THREE bays ---------- */
 {
-  const C = new THREE.Group();
-  const cx = X1-0.235, cz = 0.95;
-  C.add(roundedBox(0.45, 1.48, 0.62, 0.015, M.whiteSatin).translateX(cx).translateY(0.74).translateZ(cz));
-  for(let r=0;r<4;r++){
-    for(let c=0;c<2;c++){
-      const z = cz + (c ? 0.15 : -0.15), y = 0.22 + r*0.335;
-      C.add(box(0.02, 0.295, 0.27, M.white, cx-0.235, y, z));
-      C.add(cyl(0.011, 0.011, 0.018, M.steel, cx-0.25, y, z, 12).rotateZ(Math.PI/2));
-    }
+  const cx = TVC, RUND = TV1-TV0, zc = Z0 + CON_D/2;
+  /* top slab (oak lipping on a white carcass) */
+  furn.add(box(RUND, 0.034, CON_D, M.whiteSatin, cx, CON_Y1, zc));
+  furn.add(box(RUND, 0.014, CON_D, M.oak, cx, CON_Y1+0.024, zc));
+  /* lower level */
+  furn.add(box(RUND, 0.034, CON_D, M.whiteSatin, cx, CON_Y2, zc));
+  furn.add(box(RUND, 0.014, CON_D, M.oak, cx, CON_Y2+0.024, zc));
+  /* base + two dividers = the three bays of the drawing */
+  furn.add(box(RUND, 0.085, CON_D, M.whiteSatin, cx, 0.043, zc));
+  [cx-RUND/6, cx+RUND/6].forEach(x =>
+    furn.add(box(0.028, CON_Y2-0.085, CON_D-0.02, M.whiteSatin, x, (CON_Y2+0.085)/2, zc)));
+  /* end panels */
+  [TV0+0.016, TV1-0.016].forEach(x => furn.add(box(0.032, CON_Y1, CON_D, M.whiteSatin, x, CON_Y1/2, zc)));
+  /* 燈帶 under the top slab */
+  furn.add(box(RUND-0.08, 0.012, 0.02, M_glowStrip, cx, CON_Y1-0.028, Z0+0.07));
+
+  /* the clutter the family actually keeps on it (photo) */
+  const bookMats = [0x8a6f5a, 0x6f7d8a, 0xa8956f, 0x7d6a8a, 0x5a7d6f];
+  let bx = TV0+0.14;
+  for(let i=0;i<7;i++){                                       // stack of books on the top slab
+    const h = rr(0.026, 0.04), t = rr(0.16, 0.20);
+    furn.add(box(t, h, 0.13, std({ color:bookMats[i%5], roughness:0.85 }), bx, 0.7725+h/2, Z0+0.16).rotateY(rr(-0.08,0.08)));
+    bx += 0.012;
   }
-  /* things on top */
-  C.add(cyl(0.055, 0.05, 0.14, M.ceramic, cx, 1.55, cz-0.16, 18));
-  C.add(box(0.2, 0.03, 0.14, std({color:0x9aa4ae, roughness:0.85}), cx, 1.495, cz+0.12).rotateY(-0.2));
-  const little = new THREE.Group();
-  little.add(cyl(0.04, 0.032, 0.07, M.terracotta, 0, 0.035, 0, 14));
-  little.add(sphere(0.05, M.leafC, 0, 0.11, 0, 12));
-  little.position.set(cx, 1.48, cz+0.24); C.add(little);
-  shadows(C); furn.add(C);
+  furn.add(box(0.17, 0.10, 0.13, std({ color:0xd8cfc0, roughness:0.9 }), TV0+0.52, 0.805, Z0+0.20));   // box
+  furn.add(box(0.14, 0.028, 0.19, std({ color:0x9aa4ae, roughness:0.85 }), TVC+0.30, 0.773, Z0+0.14).rotateY(0.2));
+  furn.add(cyl(0.045, 0.038, 0.15, M.ceramic, TVC+0.62, 0.833, Z0+0.16, 18));                          // bottle
+  const plant2 = new THREE.Group();
+  plant2.add(cyl(0.045, 0.035, 0.07, M.terracotta, 0, 0.035, 0, 14));
+  plant2.add(sphere(0.048, M.leafB, 0, 0.105, 0, 12));
+  plant2.position.set(TV0+0.86, 0.7575, Z0+0.13);
+  furn.add(plant2);
+  /* router + coiled cables on the lower shelf */
+  furn.add(box(0.21, 0.032, 0.135, M.black, TV0+0.30, 0.589, Z0+0.17));
+  furn.add(cyl(0.004,0.004,0.10,M.black, TV0+0.22, 0.65, Z0+0.15, 6).rotateZ(0.5));
+  furn.add(cyl(0.004,0.004,0.10,M.black, TV0+0.26, 0.65, Z0+0.21, 6).rotateZ(0.25));
+  const coil = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.008, 7, 20), std({ color:0xd8c26a, roughness:0.8 }));
+  coil.rotation.x = Math.PI/2; coil.position.set(TV0+0.66, 0.452, Z0+0.18); furn.add(coil);
+  furn.add(box(0.24, 0.055, 0.17, std({ color:0xc9ccce, roughness:0.5, metalness:0.5 }), TV1-0.30, 0.517, Z0+0.17));
+  const tray = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.012, 8, 22), M.steelDark);
+  tray.rotation.x = Math.PI/2; tray.position.set(TV1-0.62, 0.452, Z0+0.16); furn.add(tray);
+  /* shoes / boxes tidied into the three bays */
+  furn.add(box(0.26, 0.20, 0.24, std({ color:0xd9cdb4, roughness:0.95 }), cx-RUND/6, 0.185, zc));
+  furn.add(box(0.24, 0.16, 0.22, std({ color:0xbfae95, roughness:0.95 }), cx+RUND/6, 0.165, zc));
+  furn.add(box(0.22, 0.13, 0.20, std({ color:0x8a9aa8, roughness:0.95 }), cx+RUND/2.6, 0.15, zc));
 }
 
-/* ---------- walnut glass display cabinet + figurines (north wall) ---------- */
+/* ---------- 廁門貨架 — open book shelf beside the 廁所門 ---------- */
 {
   const G = new THREE.Group();
-  const cx = -0.62, back = Z0+0.01, front = Z0+0.35;
-  G.add(box(0.90, 1.96, 0.02, M.walnut, cx, 0.99, back+0.01));
-  G.add(box(0.03, 1.98, 0.35, M.walnut, cx-0.445, 0.99, back+0.175));
-  G.add(box(0.03, 1.98, 0.35, M.walnut, cx+0.445, 0.99, back+0.175));
-  G.add(box(0.92, 0.03, 0.35, M.walnut, cx, 1.965, back+0.175));
-  G.add(box(0.92, 0.10, 0.37, M.walnut, cx, 0.05, back+0.185));
-  G.add(box(0.86, 0.025, 0.32, M.walnut, cx, 0.72, back+0.17));
-  G.add(box(0.86, 0.025, 0.32, M.walnut, cx, 1.02, back+0.17));
-  /* interior glass shelves */
-  G.add(box(0.80, 0.012, 0.28, M.glass, cx, 1.32, back+0.17));
-  G.add(box(0.80, 0.012, 0.28, M.glass, cx, 1.62, back+0.17));
-  /* LED strip inside */
-  G.add(box(0.84, 0.012, 0.02, M_glowCab, cx, 1.92, back+0.07));
-  /* glass doors w/ walnut frames */
-  [-0.23, 0.23].forEach(dz=>{
-    const d = new THREE.Group();
-    d.add(box(0.44, 0.04, 0.025, M.walnut, 0, 0.455, 0));
-    d.add(box(0.44, 0.04, 0.025, M.walnut, 0, -0.455, 0));
-    d.add(box(0.04, 0.87, 0.025, M.walnut, -0.20, 0, 0));
-    d.add(box(0.04, 0.87, 0.025, M.walnut,  0.20, 0, 0));
-    const glassP = new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.83), M.glass);
-    d.add(glassP);
-    d.position.set(cx+dz, 1.475, front-0.02);
-    G.add(d);
+  const cx = (SB0+SB1)/2, w = SB1-SB0-0.03, DP = 0.30, back = Z0+0.02;
+  const HGT = 1.75;
+  G.add(box(w, 0.025, DP, M.oak, cx, HGT-0.0125, back+DP/2));                 // top
+  [0.03, 0.40, 0.77, 1.14, 1.51].forEach(y => G.add(box(w, 0.022, DP, M.oak, cx, y, back+DP/2)));
+  [cx-w/2, cx+w/2].forEach(x => G.add(box(0.025, HGT, DP, M.oak, x, HGT/2, back+DP/2)));
+  G.add(box(w, HGT, 0.018, M.oakPale, cx, HGT/2, back+0.009));                // 背板
+  /* 書 */
+  const bcols = [0x8a6f5a, 0x6f7d8a, 0xa8956f, 0x7d6a8a, 0x5a7d6f, 0xb8564a, 0xc9b48a];
+  [0.53, 0.90, 1.27, 1.64].forEach((y,row)=>{
+    let x = cx - w/2 + 0.03;
+    let n = 0;
+    while(x < cx + w/2 - 0.05 && n < 12){
+      const t = rr(0.018, 0.032), h = rr(0.15, 0.20);
+      const bk = box(t, h, 0.15, std({ color:bcols[(row+n)%7], roughness:0.85 }), x+t/2, y+0.011+h/2, back+DP/2);
+      bk.rotation.z = rr(-0.05, 0.05);
+      G.add(bk); x += t + 0.004; n++;
+    }
   });
-  /* lower doors */
-  [-0.23, 0.23].forEach(dz=>{
-    G.add(box(0.42, 0.58, 0.02, std({color:0x3d2c1f, roughness:0.55}), cx+dz, 0.42, front-0.005));
-    G.add(box(0.42, 0.012, 0.022, M.brass, cx+dz, 0.56, front+0.005));
-  });
-  /* books in the open niche */
-  const bookCols = [0x8a6f5a, 0x6f7d8a, 0xa8956f, 0x7d6a8a, 0x5a7d6f];
-  let bx = cx-0.36;
-  for(let i=0;i<6;i++){
-    const h = rr(0.17, 0.235), t = rr(0.024, 0.04);
-    const b = box(t, h, 0.16, std({ color:bookCols[i%5], roughness:0.85 }), bx, 0.7325+h/2, back+0.17);
-    b.rotation.z = rr(-0.06,0.06);
-    G.add(b); bx += t + 0.004;
-  }
-  /* figurines — little pastel pals on the glass shelves */
-  const figCols = [0xa8c8b8, 0xe0a08c, 0xe8d8a8, 0x7a8fa8, 0xd8b870, 0xbfa8d0];
-  const figSpots = [
-    [cx-0.26, 1.628], [cx-0.02, 1.636], [cx+0.24, 1.628],
-    [cx-0.16, 1.328], [cx+0.14, 1.331],
-    [cx+0.05, 1.034],
-  ];
-  figSpots.forEach((s,i)=>{
-    const f = new THREE.Group();
-    const mat = std({ color:figCols[i], roughness:0.6 });
-    const body = sphere(0.032, mat, 0, 0.038, 0, 14); body.scale.set(1, 1.3, 1); f.add(body);
-    f.add(sphere(0.028, mat, 0, 0.098, 0, 14));
-    f.add(sphere(0.011, mat, -0.022, 0.12, 0.008, 8));
-    f.add(sphere(0.011, mat, 0.022, 0.12, 0.008, 8));
-    f.add(sphere(0.008, std({color:0x2a2018, roughness:0.5}), -0.012, 0.10, 0.026, 8));
-    f.add(sphere(0.008, std({color:0x2a2018, roughness:0.5}),  0.012, 0.10, 0.026, 8));
-    f.rotation.y = rr(-0.4, 0.4);
-    f.position.set(s[0], s[1], back+0.16);
-    G.add(f);
-  });
-  /* small vase on top */
-  G.add(cyl(0.035, 0.028, 0.12, M.ceramic, cx-0.2, 2.04, back+0.17, 16));
+  /* 頂層擺設 */
+  const trophy = new THREE.Group();
+  trophy.add(box(0.05, 0.02, 0.05, M.brass, 0, 0.01, 0));
+  trophy.add(cyl(0.008, 0.008, 0.07, M.brass, 0, 0.055, 0, 8));
+  trophy.add(cyl(0.035, 0.018, 0.06, M.brass, 0, 0.12, 0, 12));
+  trophy.position.set(cx-0.09, HGT, back+DP/2); G.add(trophy);
+  const toycar = roundedBox(0.10, 0.035, 0.05, 0.015, std({ color:0xe8b23c, roughness:0.5 }));
+  toycar.position.set(cx+0.04, HGT+0.018, back+DP/2); G.add(toycar);
   shadows(G); furn.add(G);
 }
 
-/* ---------- dining set (east end, by the kitchen pass-through) ---------- */
+/* ---------- 深色木皮牆 + 掛鐘 (plank wall to the right of the white panel) ---------- */
+{
+  for(let x = TV1+0.02; x < TD0-0.01; x += 0.086)
+    shell.add(box(0.080, 2.30, 0.018, M.plank, x, 1.15, Z0+0.012));
+  /* 掛鐘 */
+  const C = new THREE.Group();
+  C.add(cyl(0.13, 0.13, 0.03, M.whiteSatin, 0, 0, 0, 30).rotateX(Math.PI/2));
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.012, 10, 30), M.steel);
+  C.add(rim);
+  for(let i=0;i<12;i++){
+    const a = i*Math.PI/6;
+    const tick = box(0.006, i%3===0 ? 0.03 : 0.016, 0.006, M.matteGray, Math.sin(a)*0.10, Math.cos(a)*0.10, 0.017);
+    tick.rotation.z = -a;
+    C.add(tick);
+  }
+  C.add(box(0.012, 0.065, 0.006, M.black, 0, 0.032, 0.02));
+  const h2 = box(0.008, 0.10, 0.006, M.black, 0, 0.045, 0.019); h2.rotation.z = 0.9; C.add(h2);
+  C.add(sphere(0.010, M.brass, 0, 0, 0.022, 10));
+  C.position.set((TV1+TD0)/2, 2.12, Z0+0.035);
+  C.traverse(o=>{ if(o.isMesh) o.castShadow = false; });
+  furn.add(C);
+}
+
+/* ---------- 大柜 — the big pastel drawer chest, standing to the RIGHT of the sofa ---------- */
+{
+  const C = new THREE.Group();
+  const cx = X1-0.31, cz = 0.72, W = 1.10, DP = 0.62, HGT = 1.50;
+  C.add(roundedBox(DP, HGT, W, 0.015, M.whiteSatin).translateX(cx).translateY(HGT/2).translateZ(cz));
+  const rowCols = [0xf6f5f2, 0xeceae5, 0xb9b6b0, 0xe6c9cf, 0xa4b39f];
+  const rh = (HGT-0.09)/rowCols.length;
+  rowCols.forEach((col, r)=>{
+    const y = 0.06 + rh/2 + r*rh;
+    for(let c=-1;c<=1;c+=2){
+      const z = cz + c*W/4;
+      C.add(box(0.022, rh-0.028, W/2-0.04, std({ color:col, roughness:0.42 }), cx-DP/2-0.004, y, z));
+      C.add(box(0.03, 0.022, 0.13, M.steelDark, cx-DP/2-0.02, y+rh/2-0.05, z));      // 把手
+    }
+  });
+  /* things on top (as in the photo) */
+  C.add(cyl(0.055, 0.05, 0.14, M.ceramic, cx, HGT+0.07, cz-0.34, 18));
+  C.add(box(0.20, 0.03, 0.14, std({ color:0x9aa4ae, roughness:0.85 }), cx, HGT+0.015, cz+0.10).rotateY(-0.2));
+  const basket = cyl(0.11, 0.09, 0.12, std({ color:0xdcd4c4, roughness:1 }), cx, HGT+0.06, cz+0.30, 18);
+  C.add(basket);
+  const snake = new THREE.Group();
+  snake.add(cyl(0.05, 0.042, 0.09, M.ceramic, 0, 0.045, 0, 16));
+  for(let i=0;i<7;i++){
+    const blade = new THREE.Mesh(new THREE.ConeGeometry(0.022, rr(0.30,0.46), 6), M.leafC);
+    blade.position.set(rr(-0.03,0.03), 0.26, rr(-0.03,0.03));
+    blade.rotation.z = rr(-0.16,0.16); blade.rotation.x = rr(-0.16,0.16);
+    snake.add(blade);
+  }
+  snake.position.set(cx-0.05, HGT, cz-0.14);
+  snake.traverse(o=>{ if(o.isMesh) o.castShadow = true; });
+  C.add(snake);
+  shadows(C); furn.add(C);
+}
+
+/* ---------- dining set (west end, to the LEFT of the sofa) ---------- */
 {
   const Dg = new THREE.Group();
-  const tx = 1.0, tz = 0.25;
+  const tx = -1.25, tz = 0.05;
   Dg.add(roundedBox(1.05, 0.035, 0.66, 0.02, M.oak).translateX(tx).translateY(0.72).translateZ(tz));
   /* white legs (like the photo) */
   [[-0.45,-0.25],[0.45,-0.25],[-0.45,0.25],[0.45,0.25]].forEach(([dx,dz])=>{
@@ -995,7 +1116,7 @@ const cat = new THREE.Group();
 /* ---------- oak sideboard + lamp + art (south wall) ---------- */
 {
   const S = new THREE.Group();
-  const cx = 0.20, cz = Z1-0.21;
+  const cx = 0, cz = 0;                       // built at the origin, then placed on the west wall
   S.add(roundedBox(1.10, 0.62, 0.38, 0.02, M.oak).translateX(cx).translateY(0.41).translateZ(cz));
   [[-0.5,-0.13],[0.5,-0.13],[-0.5,0.13],[0.5,0.13]].forEach(([lx,lz])=>{
     S.add(cyl(0.018, 0.015, 0.10, M.walnut, cx+lx, 0.05, cz+lz, 10));
@@ -1035,10 +1156,13 @@ const cat = new THREE.Group();
   vase.children.forEach(c=>{ c.castShadow = true; });
   S.add(vase);
   S.add(box(0.16, 0.028, 0.12, std({color:0x8a9aa8, roughness:0.8}), cx-0.05, 0.734, cz).rotateY(0.2));
-  shadows(S); furn.add(S);
+  shadows(S);
+  S.rotation.y = -Math.PI/2;                  // front faces east, into the room
+  S.position.set(X0+0.19, 0, 0.45);
+  furn.add(S);
 
   /* two abstract art frames above (procedural mid-century shapes) */
-  function artFrame(x, y, w, h, mono){
+  function artFrame(w, h, mono){
     const F = new THREE.Group();
     F.add(box(w, h, 0.022, M.oak, 0, 0, 0));
     F.add(box(w-0.05, h-0.05, 0.012, std({ color:0xf2ece0, roughness:0.9 }), 0, 0, 0.014));
@@ -1049,64 +1173,30 @@ const cat = new THREE.Group();
       std({ color: 0x7a8fa8, roughness:0.85 }));
     shp2.position.set(0, 0, 0.021); F.add(shp2);
     F.add(box(w*0.5, 0.02, 0.012, std({color:0x9aa88a, roughness:0.85}), -w*0.06, -h*0.26, 0.021));
-    F.position.set(x, y, Z1-0.02);
-    F.rotation.y = Math.PI;
+    F.rotation.y = Math.PI/2;
     return F;
   }
-  furn.add(artFrame(0.0, 1.62, 0.42, 0.55, false));
-  furn.add(artFrame(0.52, 1.58, 0.34, 0.44, true));
+  const a1 = artFrame(0.42, 0.55, false); a1.position.set(X0+0.05, 1.62, 0.19); furn.add(a1);
+  const a2 = artFrame(0.34, 0.44, true);  a2.position.set(X0+0.05, 1.58, 0.71); furn.add(a2);
 }
 
-/* ---------- ceiling fan near the window ---------- */
-const fanBlades = new THREE.Group();
-{
-  const F = new THREE.Group();
-  F.add(cyl(0.012, 0.012, 0.24, M.skirt, 0, H-0.12, 0, 10));
-  F.add(cyl(0.09, 0.09, 0.035, M.skirt, 0, H-0.02, 0, 22));
-  F.add(cyl(0.055, 0.07, 0.09, M.skirt, 0, H-0.27, 0, 18));
-  F.add(cyl(0.05, 0.05, 0.02, M_glowWarm, 0, H-0.325, 0, 18));
-  for(let i=0;i<3;i++){
-    const b = roundedBox(0.50, 0.012, 0.11, 0.02, M.skirt);
-    b.position.set(0.29, H-0.30, 0);
-    b.rotation.x = 0.20;
-    const holder = new THREE.Group();
-    holder.rotation.y = i*2.094;
-    holder.add(b);
-    fanBlades.add(holder);
-  }
-  fanBlades.position.set(0, 0, 0);
-  F.add(fanBlades);
-  F.position.set(-1.50, 0, 0.20);
-  F.traverse(o=>{ if(o.isMesh){ o.castShadow = o.position.y < H-0.15; } });
-  furn.add(F);
-}
-
-/* ---------- split AC unit (east wall, high) ---------- */
-{
-  const A = new THREE.Group();
-  A.add(roundedBox(0.18, 0.28, 0.82, 0.04, M.whiteSatin).translateY(2.30).translateZ(0));
-  A.add(box(0.012, 0.05, 0.7, std({color:0x9a948a, roughness:0.7}), -0.092, 2.21, 0));
-  A.add(sphere(0.008, emissiveMat(0x33ee77, 0.7, 1.0), -0.095, 2.24, 0.3));
-  A.position.set(X1-0.10, 0, -0.85);
-  shadows(A); furn.add(A);
-}
-
-/* ---------- entry corner: hooks, tote, cap, umbrella stand, mat, shoes ---------- */
+/* ---------- entry corner (by the east door): hooks, tote, cap, umbrella, mat, shoes ---------- */
 {
   const E = new THREE.Group();
-  /* hook rail (north wall, beside the kitchen doorway) */
-  E.add(box(0.30, 0.05, 0.02, M.oak, 1.965, 1.68, Z0+0.045));
-  [1.87, 1.955, 2.04].forEach(x=>{
-    E.add(cyl(0.008, 0.008, 0.06, M.brass, x, 1.665, Z0+0.08, 8).rotateX(Math.PI/2));
-    E.add(sphere(0.013, M.brass, x, 1.665, Z0+0.11, 10));
+  /* hook rail on the east wall, just south of the door */
+  E.add(box(0.02, 0.05, 0.30, M.oak, X1-0.045, 1.68, 0.0));
+  [-0.11, 0.0, 0.11].forEach(z=>{
+    E.add(cyl(0.008, 0.008, 0.06, M.brass, X1-0.075, 1.665, z, 8).rotateZ(Math.PI/2));
+    E.add(sphere(0.013, M.brass, X1-0.105, 1.665, z, 10));
   });
   /* tote bag on the middle hook */
   const tote = new THREE.Group();
   tote.add(roundedBox(0.20, 0.3, 0.09, 0.03, std({color:0xe8e2d2, roughness:0.95})).translateY(-0.19));
   const strap = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.007, 8, 16, Math.PI), std({color:0xd8d0bc, roughness:0.95}));
   strap.position.y = -0.045; tote.add(strap);
-  tote.position.set(1.955, 1.665, Z0+0.12);
-  tote.rotation.x = 0.06;
+  tote.position.set(X1-0.115, 1.665, 0.0);
+  tote.rotation.y = Math.PI/2;
+  tote.rotation.z = 0.06;
   E.add(tote);
   /* cap on another hook */
   const cap = new THREE.Group();
@@ -1114,27 +1204,27 @@ const fanBlades = new THREE.Group();
   cap.add(dome);
   const brim = cyl(0.085, 0.085, 0.008, std({color:0x8fa08a, roughness:0.95}), 0, 0.005, 0.055, 18);
   cap.add(brim);
-  cap.position.set(1.89, 1.60, Z0+0.10);
-  cap.rotation.x = -0.3;
+  cap.position.set(X1-0.10, 1.60, -0.11);
+  cap.rotation.y = -Math.PI/2; cap.rotation.x = -0.3;
   E.add(cap);
-  /* umbrella stand + umbrellas (beside the door, between door and kitchen) */
-  const stand = cyl(0.085, 0.075, 0.44, std({ color:0x6a625a, roughness:0.8 }), 0.90, 0.22, -1.19, 20);
+  /* umbrella stand + umbrellas, tucked into the corner beside the door */
+  const stand = cyl(0.085, 0.075, 0.44, std({ color:0x6a625a, roughness:0.8 }), X1-0.22, 0.22, -1.16, 20);
   E.add(stand);
-  E.add(cyl(0.075, 0.075, 0.01, std({color:0x3a352f, roughness:0.9}), 0.90, 0.435, -1.19, 20));
-  [[0.05, -0.05, 0x2a3a5a],[-0.04, 0.06, 0x8a8f94]].forEach(([ox, oz, col])=>{
+  E.add(cyl(0.075, 0.075, 0.01, std({color:0x3a352f, roughness:0.9}), X1-0.22, 0.435, -1.16, 20));
+  [[-0.05, 0.05, 0x2a3a5a],[0.06, -0.04, 0x8a8f94]].forEach(([ox, oz, col])=>{
     const um = new THREE.Group();
     um.add(cyl(0.007, 0.007, 0.7, M.steel, 0, 0.35, 0, 8));
     const tip = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.09, 8), std({ color:col, roughness:0.7 }));
     tip.position.y = 0.72; um.add(tip);
     const hd = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.008, 8, 14, Math.PI), std({ color:0x4a3a2a, roughness:0.7 }));
     hd.position.y = 0.03; hd.rotation.z = Math.PI; um.add(hd);
-    um.position.set(0.90+ox, 0.03, -1.19+oz);
+    um.position.set(X1-0.22+ox, 0.03, -1.16+oz);
     um.rotation.z = ox*4;
     E.add(um);
   });
-  /* door mat */
-  E.add(roundedBox(0.66, 0.014, 0.42, 0.05, std({ color:0x554f48, roughness:1 })).translateX(0.37).translateY(0.008).translateZ(Z0+0.32));
-  E.add(roundedBox(0.54, 0.006, 0.30, 0.04, std({ color:0x6a645b, roughness:1 })).translateX(0.37).translateY(0.017).translateZ(Z0+0.32));
+  /* door mat just inside the door */
+  E.add(roundedBox(0.46, 0.014, 0.70, 0.05, std({ color:0x554f48, roughness:1 })).translateX(1.72).translateY(0.008).translateZ(-0.61));
+  E.add(roundedBox(0.34, 0.006, 0.56, 0.04, std({ color:0x6a645b, roughness:1 })).translateX(1.72).translateY(0.017).translateZ(-0.61));
   /* pairs of shoes */
   function shoe(x, z, ry, col, s=1){
     const Sh = new THREE.Group();
@@ -1144,10 +1234,10 @@ const fanBlades = new THREE.Group();
     Sh.position.set(x, 0.002, z); Sh.rotation.y = ry;
     return Sh;
   }
-  E.add(shoe(0.62, -0.83, 1.35, 0xe8e5e0));      /* white pair */
-  E.add(shoe(0.58, -1.05, 1.55, 0xdfe2e4));
-  E.add(shoe(0.14, -0.80, 1.75, 0xe8a8b8, 0.8)); /* child pink pair */
-  E.add(shoe(0.17, -1.02, 1.95, 0xe2aebc, 0.8));
+  E.add(shoe(1.66, -0.92, 0.45, 0xe8e5e0));      /* white pair */
+  E.add(shoe(1.66, -0.78, 0.25, 0xdfe2e4));
+  E.add(shoe(1.60, -0.42, -0.35, 0xe8a8b8, 0.8)); /* child pink pair */
+  E.add(shoe(1.62, -0.29, -0.15, 0xe2aebc, 0.8));
   shadows(E); furn.add(E);
 }
 
@@ -1166,20 +1256,8 @@ const fanBlades = new THREE.Group();
     s.scale.set(1, rr(0.7,0.95), 1);
     P.add(s);
   }
-  P.position.set(-1.84, 0, 1.07);
+  P.position.set(-1.74, 0, 1.02);
   shadows(P); furn.add(P);
-
-  const S = new THREE.Group();
-  S.add(cyl(0.05, 0.042, 0.09, M.ceramic, 0, 0.045, 0, 16));
-  for(let i=0;i<6;i++){
-    const blade = new THREE.Mesh(new THREE.ConeGeometry(0.022, rr(0.3,0.45), 6), M.leafC);
-    blade.position.set(rr(-0.03,0.03), 0.26, rr(-0.03,0.03));
-    blade.rotation.z = rr(-0.16,0.16); blade.rotation.x = rr(-0.16,0.16);
-    S.add(blade);
-  }
-  S.position.set(X1-0.235, 1.48, 1.15);
-  S.traverse(o=>{ if(o.isMesh) o.castShadow = true; });
-  furn.add(S);
 }
 
 /* ---------- teddy on the sofa ---------- */
@@ -1194,29 +1272,9 @@ const fanBlades = new THREE.Group();
   Bear.add(sphere(0.028, M.teddy, -0.085, 0.13, 0.03, 10));
   Bear.add(sphere(0.028, M.teddy,  0.085, 0.13, 0.03, 10));
   Bear.add(sphere(0.03, M.cushionCrm, 0, 0.19, 0.055, 10));   // muzzle
-  Bear.position.set(-1.38, 0.41, -0.30);
-  Bear.rotation.y = 1.15;
+  Bear.position.set(0.72, 0.41, 0.72);
+  Bear.rotation.y = -2.0;
   shadows(Bear); furn.add(Bear);
-}
-
-/* ---------- wall clock above the main door ---------- */
-{
-  const C = new THREE.Group();
-  C.add(cyl(0.13, 0.13, 0.03, M.whiteSatin, 0, 0, 0, 30).rotateX(Math.PI/2));
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.012, 10, 30), M.brass);
-  C.add(rim);
-  for(let i=0;i<12;i++){
-    const a = i*Math.PI/6;
-    const tick = box(0.006, i%3===0 ? 0.03 : 0.016, 0.006, M.matteGray, Math.sin(a)*0.10, Math.cos(a)*0.10, 0.017);
-    tick.rotation.z = -a;
-    C.add(tick);
-  }
-  const h1 = box(0.012, 0.065, 0.006, M.black, 0, 0.032, 0.02); C.add(h1);
-  const h2 = box(0.008, 0.10, 0.006, M.black, 0, 0.045, 0.019); h2.rotation.z = 0.9; C.add(h2);
-  C.add(sphere(0.010, M.brass, 0, 0, 0.022, 10));
-  C.position.set(0.37, 2.32, Z0+0.021);
-  C.traverse(o=>{ if(o.isMesh) o.castShadow = false; });
-  furn.add(C);
 }
 
 /* ---------- floating dust motes in the window light ---------- */
@@ -1225,15 +1283,15 @@ let dust, dustPos, dustSeed;
   const N = 150;
   dustPos = new Float32Array(N*3); dustSeed = new Float32Array(N);
   for(let i=0;i<N;i++){
-    dustPos[i*3]   = rr(-2.0, -0.2);
+    dustPos[i*3]   = rr(-1.7, 1.9);
     dustPos[i*3+1] = rr(0.35, 2.3);
-    dustPos[i*3+2] = rr(-1.15, 1.15);
+    dustPos[i*3+2] = rr(0.10, 1.24);
     dustSeed[i] = rr(0, Math.PI*2);
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
   dust = new THREE.Points(g, new THREE.PointsMaterial({
-    color:0xfff0d0, size:0.016, transparent:true, opacity:0.4,
+    color:0xfff0d0, size:0.0075, transparent:true, opacity:0.30,
     blending:THREE.AdditiveBlending, depthWrite:false, sizeAttenuation:true
   }));
   dust.frustumCulled = false;
@@ -1290,10 +1348,10 @@ function applyMix(f){
    8 · CAMERA presets + guided tour
    ===================================================================== */
 const PRESETS = {
-  entrance:{ p:V3(0.55, 1.52, -0.72), t:V3(-1.05, 0.82, 0.55) },
-  sofa    :{ p:V3(-1.30, 1.10, 0.42), t:V3(1.65, 0.92, -0.30) },
-  dining  :{ p:V3(-0.60, 1.40, -0.30), t:V3(1.45, 0.84, 0.40) },
-  tv      :{ p:V3(-0.75, 1.18, 0.30), t:V3(2.00, 1.15, -0.55) },
+  entrance:{ p:V3(1.70, 1.58, -0.62), t:V3(-1.10, 0.90, 0.40) },
+  sofa    :{ p:V3(-0.95, 1.26, -0.42), t:V3(0.78, 0.55, 0.95) },
+  dining  :{ p:V3(0.12, 1.40, -0.58), t:V3(-1.58, 0.80, -0.30) },
+  tv      :{ p:V3(0.05, 1.20, 0.34), t:V3(0.05, 1.26, -1.30) },
   top     :{ p:V3(0.10, 2.38, 0.10), t:V3(0.00, 0.10, 0.00) },
 };
 const camAnim = { active:false, t:0, dur:1.4, fromP:new THREE.Vector3(), toP:new THREE.Vector3(), fromT:new THREE.Vector3(), toT:new THREE.Vector3() };
@@ -1381,15 +1439,12 @@ function tick(){
   camera.position.y = clamp(camera.position.y, 0.30, H-0.18);
   camera.position.z = clamp(camera.position.z, Z0+0.14, Z1-0.14);
 
-  /* ceiling fan */
-  fanBlades.rotation.y += dt * 2.1;
-
-  /* curtains breathing */
+  /* curtains breathing (main window is on the south wall) */
   for(const c of curtains){
     const pos = c.pos;
     for(let i=0;i<pos.count;i++){
-      const z = c.baseZ[i];
-      pos.setX(i, 0.022*Math.sin(z*13 + c.phase) + 0.010*Math.sin(z*5 + time*1.1 + c.phase));
+      const x = c.baseX[i];
+      pos.setZ(i, 0.022*Math.sin(x*13 + c.phase) + 0.010*Math.sin(x*5 + time*1.1 + c.phase));
     }
     pos.needsUpdate = true;
   }
