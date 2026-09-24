@@ -25,8 +25,11 @@ Internet is needed on first load — three.js r170 is pulled from the jsDelivr C
 | Drag | Orbit |
 | Wheel / pinch | Zoom |
 | Right-drag | Pan |
-| Keys `1`–`6` | Camera presets (Entrance / Sofa / Dining / TV / Passage / Top) |
+| Keys `1`–`7` | Camera presets (Entrance / Sofa / Dining / TV / Passage / Top / Ceiling) |
 | Key `N` | Day ⇄ Night |
+
+The page opens on the **Entrance** view — as if you have just stepped in through the 大門 — and
+**天花 Ceiling** (key `7`) drops the camera low and looks up at the ceiling.
 
 On-screen chips: camera presets, **🚪 廚房趟門** and **❄️ 冷氣拉門** (slide the kitchen door shut /
 draw the A/C cover — the cover stays shut in winter), **🌙 Night** (cross-fades the whole light rig),

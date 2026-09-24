@@ -87,7 +87,7 @@
 
 <div id="hint" class="card">
   <b>拖曳</b> 旋轉 · <b>滾輪</b> 縮放 · <b>右鍵</b> 平移<br/>
-  鍵盤 <b>1–6</b> 視角 · <b>N</b> 日夜
+  鍵盤 <b>1–7</b> 視角 · <b>N</b> 日夜
 </div>
 
 <div id="panel" class="card">
@@ -99,6 +99,7 @@
     <button class="chip" data-view="tv">電視 TV</button>
     <button class="chip" data-view="passage">過道 Passage</button>
     <button class="chip" data-view="top">俯覽 Top</button>
+    <button class="chip" data-view="ceiling">天花 Ceiling</button>
   </div>
   <div class="row">
     <span class="lab">Doors</span>
@@ -209,10 +210,10 @@ const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0xdde8f0, 26, 88);
 
 const camera = new THREE.PerspectiveCamera(58, window.innerWidth/window.innerHeight, 0.05, 220);
-camera.position.set(1.62, 1.68, 0.62);
-
+camera.position.set(-1.50, 1.52, -0.36);       // 大門入口視角 — re-applied from
+                                               // PRESETS.entrance once it is defined
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(-0.95, 0.85, -0.35);
+controls.target.set(1.10, 0.90, 0.40);
 controls.enableDamping = true;
 controls.dampingFactor = 0.07;
 controls.minDistance = 0.7;
@@ -1595,19 +1596,31 @@ function applyMix(f){
    8 · CAMERA presets + guided tour
    ===================================================================== */
 const PRESETS = {
-  entrance:{ p:V3(-1.50, 1.56, -0.26), t:V3(1.40, 0.85, 0.15) },
+  entrance:{ p:V3(-1.50, 1.52, -0.36), t:V3(1.10, 0.90, 0.40) },   // stepping in through the 大門
   sofa    :{ p:V3(-0.70, 1.30, -0.92), t:V3(1.30, 0.60, 0.85) },
   dining  :{ p:V3(0.30, 1.42, -0.62), t:V3(-1.80, 0.78, 0.80) },
   tv      :{ p:V3(0.05, 1.20, 0.34), t:V3(0.05, 1.26, -1.30) },
   passage :{ p:V3(1.15, 1.60, -0.78), t:V3(4.35, 0.98, -0.95) },
+  ceiling :{ p:V3(0.30, 0.50, 0.10), t:V3(-0.35, 2.55, -0.45) },    // low, looking up at the 天花板
   top     :{ p:V3(0.10, 2.38, 0.10), t:V3(0.00, 0.10, 0.00) },
 };
-const camAnim = { active:false, t:0, dur:1.4, fromP:new THREE.Vector3(), toP:new THREE.Vector3(), fromT:new THREE.Vector3(), toT:new THREE.Vector3() };
+/* the page opens on the 入口 view: stand the camera at the preset straight away
+   (its old raw default sat inside the 到頂大柜 — nothing but white on screen) */
+camera.position.copy(PRESETS.entrance.p);
+controls.target.copy(PRESETS.entrance.t);
+controls.update();
+document.querySelector('[data-view="entrance"]').classList.add('on');
+const camAnim = { active:false, t:0, dur:1.4, fromP:new THREE.Vector3(), toP:new THREE.Vector3(), fromT:new THREE.Vector3(), toT:new THREE.Vector3(), loosen:false };
 let tour = { on:false, idx:0, timer:0 };
-const tourOrder = ['entrance','sofa','dining','tv','passage','top'];
+const tourOrder = ['entrance','sofa','dining','tv','passage','ceiling','top'];
 
+/* the 天花 view looks up from below the target, so its orbit needs the polar
+   limit relaxed while it is on; the limit is restored when a flight lands */
+const POLAR_DEFAULT = 1.545, POLAR_CEILING = 2.80;
 function flyTo(name, dur=1.4){
   const p = PRESETS[name]; if(!p) return;
+  if(name === 'ceiling') controls.maxPolarAngle = POLAR_CEILING;
+  camAnim.loosen = (name !== 'ceiling');
   camAnim.fromP.copy(camera.position); camAnim.toP.copy(p.p);
   camAnim.fromT.copy(controls.target); camAnim.toT.copy(p.t);
   camAnim.t = 0; camAnim.dur = dur; camAnim.active = true;
@@ -1637,7 +1650,7 @@ btnSpin.addEventListener('click', ()=>{
 
 /* keyboard */
 window.addEventListener('keydown', e=>{
-  const map = { '1':'entrance', '2':'sofa', '3':'dining', '4':'tv', '5':'passage', '6':'top' };
+  const map = { '1':'entrance', '2':'sofa', '3':'dining', '4':'tv', '5':'passage', '6':'top', '7':'ceiling' };
   if(map[e.key]){ stopTour(); flyTo(map[e.key]); }
   if(e.key === 'n' || e.key === 'N') setNight(!state.night);
 });
@@ -1699,7 +1712,10 @@ function tick(){
     const s = u*u*(3-2*u);
     camera.position.lerpVectors(camAnim.fromP, camAnim.toP, s);
     controls.target.lerpVectors(camAnim.fromT, camAnim.toT, s);
-    if(u >= 1) camAnim.active = false;
+    if(u >= 1){
+      camAnim.active = false;
+      if(camAnim.loosen){ controls.maxPolarAngle = POLAR_DEFAULT; camAnim.loosen = false; }
+    }
   }
   if(tour.on){
     tour.timer += dt;
@@ -1777,6 +1793,7 @@ window.__room = {
   snapTo(name){
     const p = PRESETS[name]; if(!p) return;
     camAnim.active = false;
+    controls.maxPolarAngle = (name === 'ceiling') ? POLAR_CEILING : POLAR_DEFAULT;
     camera.position.copy(p.p); controls.target.copy(p.t);
     controls.update(); renderer.render(scene, camera);
   },
