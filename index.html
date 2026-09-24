@@ -87,7 +87,7 @@
 
 <div id="hint" class="card">
   <b>拖曳</b> 旋轉 · <b>滾輪</b> 縮放 · <b>右鍵</b> 平移<br/>
-  鍵盤 <b>1–9</b> 視角（<b>9</b> 客房多角度）· <b>N</b> 日夜
+  鍵盤 <b>1–9</b>·<b>0</b> 視角（<b>9</b> 客房 · <b>0</b> 主人房 多角度）· <b>N</b> 日夜
 </div>
 
 <div id="panel" class="card">
@@ -102,6 +102,7 @@
     <button class="chip" data-view="ceiling">天花 Ceiling</button>
     <button class="chip" data-view="kitchen">廚房 Kitchen</button>
     <button class="chip" data-view="guestroom1">客房 Guest Room · 門口</button>
+    <button class="chip" data-view="master1">主人房 Master Bedroom · 門口</button>
   </div>
   <div class="row">
     <span class="lab">Doors</span>
@@ -955,42 +956,82 @@ const kitchenLeaf = new THREE.Group();           // slid by the Open / Close chi
   shadows(B); scene.add(B);
 }
 
-/* --- 主人房 master bedroom (beyond the 主人房門) --- */
+/* --- 主人房 master bedroom (through the 主人房門, straight across the 過道 from
+   the 廁所門) — a wooden bunk bed, a 雲石窗台 on the window wall and a
+   floor-to-ceiling wooden cabinet standing beside it --- */
 {
   const B = new THREE.Group();
   const x0 = 2.25, x1 = 4.30, z0 = PAS_Z1 + T, z1 = 1.90;       // interior
   const cx = (x0+x1)/2, cz = (z0+z1)/2, w = x1-x0, d = z1-z0;
+  const WIN0 = 0.76, WIN1 = 1.74, WY0 = 0.95, WY1 = 1.85;       // east window opening
+  const wcz = (WIN0+WIN1)/2;
   B.add(box(w, 0.02, d, std({ color:0xb08a5a, roughness:0.6 }), cx, FL, cz));
   B.add(box(w, 0.1, d, M.ceil, cx, 2.35, cz));
   B.add(box(w+0.2, 2.4, 0.1, M.paint, cx, 1.2, z1+0.05));                     // far (south) wall
-  B.add(box(0.1, 2.4, d+0.2, M.paint, x0-0.05, 1.2, cz));
-  B.add(box(0.1, 2.4, d+0.2, M.paint, x1+0.05, 1.2, cz));
-  /* window + daylight on the east wall */
-  B.add(box(0.05, 1.15, 1.20, M.alu, x1-0.03, 1.55, 0.95));
-  B.add(box(0.02, 1.09, 1.14, M.glass, x1-0.05, 1.55, 0.95));
-  B.add(box(0.02, 1.25, 1.30, emissiveMat(0xdfe9f2, 0.9, 0.10), x1+0.06, 1.55, 0.95));
-  /* double bed, head to the far wall */
-  B.add(box(1.38, 0.32, 1.90, M.whiteSatin, 3.30, 0.17, 0.95));
-  B.add(box(1.32, 0.16, 1.84, M.white, 3.30, 0.41, 0.95));
-  B.add(box(1.32, 0.07, 1.10, std({ color:0xd8cfc0, roughness:0.95 }), 3.30, 0.50, 0.70));
-  B.add(roundedBox(0.48, 0.11, 0.30, 0.04, M.cushionCrm).translateX(2.95).translateY(0.55).translateZ(1.66));
-  B.add(roundedBox(0.48, 0.11, 0.30, 0.04, M.cushionSage).translateX(3.62).translateY(0.55).translateZ(1.66));
-  B.add(box(1.44, 0.60, 0.05, M.oak, 3.30, 0.30, 1.88));                      // headboard
-  /* wardrobe against the west wall + bedside table + lamp */
-  B.add(box(0.60, 2.20, 1.00, M.whiteSatin, 2.58, 1.10, 0.80));
-  B.add(box(0.03, 1.80, 0.03, M.steelDark, 2.85, 1.05, 0.40));
-  B.add(box(0.03, 1.80, 0.03, M.steelDark, 2.85, 1.05, 1.20));
-  B.add(box(0.34, 0.44, 0.34, M.oakPale, 4.10, 0.22, 1.68));
+  B.add(box(0.1, 2.4, d+0.2, M.paint, x0-0.05, 1.2, cz));                     // west wall
+  /* east wall — built around the window, with the 雲石窗台 across it */
+  B.add(box(0.1, 2.4, (WIN0-z0+0.10), M.paint, x1+0.05, 1.2, (z0-0.10+WIN0)/2));   // north of the window
+  B.add(box(0.1, 2.4, (z1+0.10-WIN1), M.paint, x1+0.05, 1.2, (WIN1+z1+0.10)/2));   // south of the window
+  B.add(box(0.1, WY0, WIN1-WIN0, M.paint, x1+0.05, WY0/2, wcz));                    // under the window
+  B.add(box(0.1, 2.4-WY1, WIN1-WIN0, M.paint, x1+0.05, (2.4+WY1)/2, wcz));          // over the window
+  B.add(box(0.24, MARBLE, WIN1-WIN0+0.08, M.marble, x1-0.02-0.12, WY0-MARBLE/2, wcz));   // 雲石窗台
+  B.add(box(0.03, 0.05, WIN1-WIN0+0.08, M.marble, x1-0.165, WY0-0.025, wcz));            // 滴水線
+  /* window frame — bars + mullion, glass behind, daylight outside */
+  B.add(box(0.06, 0.05, WIN1-WIN0+0.06, M.alu, x1-0.03, WY1+0.005, wcz));     // head
+  B.add(box(0.06, 0.05, WIN1-WIN0+0.06, M.alu, x1-0.03, WY0-0.025, wcz));     // sill rail
+  B.add(box(0.06, WY1-WY0, 0.05, M.alu, x1-0.03, (WY0+WY1)/2, WIN0+0.025));   // jambs
+  B.add(box(0.06, WY1-WY0, 0.05, M.alu, x1-0.03, (WY0+WY1)/2, WIN1-0.025));
+  B.add(box(0.05, WY1-WY0-0.08, 0.04, M.alu, x1-0.03, (WY0+WY1)/2, wcz));    // mullion
+  B.add(box(0.015, WY1-WY0-0.08, WIN1-WIN0-0.12, M.glass, x1, (WY0+WY1)/2, wcz));
+  B.add(box(0.02, WY1-WY0+0.15, WIN1-WIN0+0.16, emissiveMat(0xdfe9f2, 0.9, 0.10), x1+0.095, (WY0+WY1)/2, wcz));
+  /* 到頂大木櫃 — floor-to-ceiling wooden cabinet beside the 雲石窗台 */
+  const CW0 = -0.18, CW1 = 0.72, CDP = 0.60;                                  // z span / depth
+  const cwz = (CW0+CW1)/2, cwx = x1 - CDP/2;
+  B.add(box(CDP-0.03, 2.27, CW1-CW0-0.03, M.oak, cwx, 0.015+2.27/2, cwz));    // carcass
+  B.add(box(CDP-0.06, 0.08, CW1-CW0-0.06, std({ color:0xa9803f, roughness:0.6 }), cwx-0.015, 0.055, cwz));  // plinth
+  B.add(box(CDP, 0.06, CW1-CW0, M.oak, cwx, 2.30, cwz));                     // 到頂 filler
+  const cxf = x1 - CDP + 0.015;
+  [0, 1].forEach(i=>{
+    const dz = CW0 + 0.225 + i*0.45;
+    B.add(box(0.02, 1.05, 0.42, M.oakPale, cxf, 0.62, dz));                   // lower doors
+    B.add(box(0.02, 1.05, 0.42, M.oakPale, cxf, 1.72, dz));                   // upper doors
+    B.add(box(0.02, 1.05, 0.012, M.panelLine, cxf-0.012, 0.62, dz));
+    B.add(box(0.02, 1.05, 0.012, M.panelLine, cxf-0.012, 1.72, dz));
+    B.add(box(0.02, 0.34, 0.025, M.steelDark, cxf-0.022, 0.62, dz+(i? -0.16 : 0.16)));
+    B.add(box(0.02, 0.34, 0.025, M.steelDark, cxf-0.022, 1.72, dz+(i? -0.16 : 0.16)));
+  });
+  /* 上下木床 — wooden bunk bed along the south wall (head at the west end) */
+  const BX0 = 2.34, BX1 = 4.22, BZ0 = 1.02, BZ1 = 1.86;
+  const bx = (BX0+BX1)/2, bz = (BZ0+BZ1)/2, blen = BX1-BX0, bdep = BZ1-BZ0;
+  [[BX0+0.035,BZ0+0.035],[BX1-0.035,BZ0+0.035],[BX0+0.035,BZ1-0.035],[BX1-0.035,BZ1-0.035]]
+    .forEach(([px,pz])=> B.add(box(0.07, 1.86, 0.07, M.oak, px, 0.93, pz)));  // corner posts
+  [0.40, 1.36].forEach((py, k)=>{
+    B.add(box(blen, 0.05, bdep, M.oak, bx, py, bz));                          // bunk platform
+    B.add(box(blen-0.08, 0.12, bdep-0.06, M.white, bx, py+0.085, bz));        // mattress
+    B.add(box(1.18, 0.05, bdep-0.08, k ? std({ color:0xf2b9c6, roughness:0.95 })
+                                          : std({ color:0x8fa8c8, roughness:0.95 }), 3.60, py+0.145, bz));  // duvet
+    [ -0.06, 0.06 ].forEach(dz=> B.add(box(1.18, 0.006, 0.022, M.white, 3.60, py+0.173, bz+dz)));
+    B.add(roundedBox(0.30, 0.09, 0.46, 0.035, M.cushionCrm).translateX(2.62).translateY(py+0.155).translateZ(bz));  // pillow
+  });
+  B.add(box(blen-0.10, 0.05, 0.04, M.oak, bx+0.05, 1.72, BZ0+0.025));         // upper guard rail
+  [2.62, 3.28, 3.94].forEach(px=> B.add(box(0.05, 0.34, 0.04, M.oak, px, 1.55, BZ0+0.025)));
+  [BZ0+0.10, BZ1-0.10].forEach(pz=> B.add(box(0.05, 1.00, 0.05, M.oak, BX0+0.10, 0.92, pz)));   // ladder rails
+  [0.65, 0.95, 1.25].forEach(py=> B.add(box(0.05, 0.05, bdep-0.24, M.oakPale, BX0+0.10, py, bz)));  // rungs
+  [3.00, 3.70].forEach(px=> B.add(box(0.54, 0.28, 0.58, M.oakPale, px, 0.17, bz)));   // storage boxes under
+  /* bedside table + lamp on the west wall, north of the bed */
+  B.add(box(0.36, 0.46, 0.36, M.oakPale, 2.46, 0.245, 0.35));
+  B.add(box(0.30, 0.02, 0.30, M.panelLine, 2.46, 0.475, 0.35));
   const lamp = new THREE.Group();
   lamp.add(cyl(0.06, 0.08, 0.02, M.brass, 0, 0.01, 0, 16));
   lamp.add(cyl(0.008, 0.008, 0.16, M.brass, 0, 0.09, 0, 8));
   const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.085, 0.11, 18, 1, true), M.linen);
   shade.position.y = 0.22; lamp.add(shade);
   lamp.add(sphere(0.016, M_glowLamp, 0, 0.21, 0, 10));
-  lamp.position.set(4.10, 0.44, 1.68);
+  lamp.position.set(2.46, 0.47, 0.35);
+  lamp.traverse(o=>{ if(o.isMesh) o.castShadow = true; });
   B.add(lamp);
-  B.add(box(1.10, 0.012, 0.70, std({ color:0xc8bfa8, roughness:1 }), 3.60, FL+0.006, 0.40));
-  B.add(cyl(0.09, 0.09, 0.03, M_glowWarm, 3.30, 2.32, 0.90, 22));
+  B.add(box(1.00, 0.012, 0.70, std({ color:0xc8bfa8, roughness:1 }), 3.10, FL+0.006, 0.28));   // rug
+  B.add(cyl(0.09, 0.09, 0.03, M_glowWarm, 3.28, 2.32, 0.80, 22));            // ceiling lamp
   shadows(B); scene.add(B);
 }
 
@@ -1692,18 +1733,29 @@ const PRESETS = {
   passage :{ p:V3(1.15, 1.60, -0.78), t:V3(4.35, 0.98, -0.95) },
   ceiling :{ p:V3(0.30, 0.50, 0.10), t:V3(-0.35, 2.55, -0.45) },    // low, looking up at the 天花板
   kitchen :{ p:V3(-1.95, 1.68, -1.46), t:V3(-1.90, 1.15, -2.60) },  // stepped into the galley kitchen
-  /* 客房 is a tiny room, so one shot cannot show it all: four angles that the
-     chip (and key 9) step through — 門口 ➜ 全景 ➜ 上下床 ➜ 書檯窗台 */
+  /* 客房 / 主人房 are tiny rooms, so one shot cannot show them all: four angles
+     each, stepped through by their chip (and keys 9 / 0) */
   guestroom1:{ p:V3(4.56, 1.45, -0.52), t:V3(6.05, 1.20, -0.88), fov:80 },  // 門口 — bed, window, desk
   guestroom2:{ p:V3(5.08, 1.34,  0.10), t:V3(5.95, 1.20, -1.32), fov:92 },  // 全景 — the whole loft
   guestroom3:{ p:V3(5.40, 1.20,  0.12), t:V3(5.45, 1.15, -1.60), fov:88 },  // 上下床 — bed over storage
   guestroom4:{ p:V3(5.10, 1.12, -0.62), t:V3(6.42, 0.98, -0.42), fov:76 },  // 書檯窗台 — desk + 雲石窗台
+  master1   :{ p:V3(2.70, 1.48, -0.16), t:V3(3.55, 1.00, 1.30), fov:84 },  // 門口 — the room from its door
+  master2   :{ p:V3(2.70, 1.48, -0.16), t:V3(3.55, 0.95, 1.35), fov:104 }, // 全景 — wide sweep of the whole room
+  master3   :{ p:V3(2.85, 0.95, -0.12), t:V3(3.30, 0.95, 1.40), fov:88 },  // 上下床 — the wooden bunk
+  master4   :{ p:V3(2.45, 1.30,  0.62), t:V3(4.25, 1.05, 0.58), fov:80 },  // 窗台大櫃 — 雲石窗台 + 到頂木櫃
   top     :{ p:V3(0.10, 2.38, 0.10), t:V3(0.00, 0.10, 0.00) },
 };
 /* a view id may carry a trailing digit when several angles share one chip */
 const viewKey = n => String(n).replace(/\d+$/,'');
-const GUEST_ANGLES = ['guestroom1','guestroom2','guestroom3','guestroom4'];
-const GUEST_TAGS = { guestroom1:'門口', guestroom2:'全景', guestroom3:'上下床', guestroom4:'書檯窗台' };
+/* rooms that step through several angles from a single chip */
+const GROUPS = {
+  guestroom:{ base:'客房 Guest Room',       chip:'[data-view="guestroom1"]',
+              ids:['guestroom1','guestroom2','guestroom3','guestroom4'],
+              tags:{ guestroom1:'門口', guestroom2:'全景', guestroom3:'上下床', guestroom4:'書檯窗台' } },
+  master   :{ base:'主人房 Master Bedroom', chip:'[data-view="master1"]',
+              ids:['master1','master2','master3','master4'],
+              tags:{ master1:'門口', master2:'全景', master3:'上下床', master4:'窗台大櫃' } },
+};
 let currentView = 'entrance';
 /* the page opens on the 入口 view: stand the camera at the preset straight away
    (its old raw default sat inside the 到頂大柜 — nothing but white on screen) */
@@ -1721,14 +1773,16 @@ const POLAR_DEFAULT = 1.545, POLAR_CEILING = 2.80;
 /* the 廚房 / 客房 views step into tight rooms, so they get a wider lens and
    their own camera fences; both are handed back when a flight lands */
 const FOV_DEFAULT = 58, FOV_SMALL = 72;
-const smallRoom = name => (viewKey(name) === 'kitchen' || viewKey(name) === 'guestroom');
+const smallRoom = name => ['kitchen','guestroom','master'].includes(viewKey(name));
 /* the camera is fenced into the room it is showing (no wall clipping): the 廚房
    view moves the fence into the galley kitchen instead */
 const BOUNDS_ROOM    = { x:[X0+0.14, X1-0.14], y:[0.30, H-0.18], z:[Z0+0.14, Z1-0.14] };
 const BOUNDS_KITCHEN = { x:[-2.50, -1.00], y:[0.35, 2.30], z:[-2.86, -1.44] };
 const BOUNDS_GUEST   = { x:[4.46, 6.44], y:[0.35, 2.30], z:[-1.79, 0.14] };
+const BOUNDS_MASTER  = { x:[2.31, 4.24], y:[0.35, 2.30], z:[-0.16, 1.84] };
 const boundsOf = name => viewKey(name) === 'kitchen' ? BOUNDS_KITCHEN
-                        : (viewKey(name) === 'guestroom' ? BOUNDS_GUEST : BOUNDS_ROOM);
+                        : (viewKey(name) === 'guestroom' ? BOUNDS_GUEST
+                        : (viewKey(name) === 'master' ? BOUNDS_MASTER : BOUNDS_ROOM));
 const unionBounds = (a,b)=>({ x:[Math.min(a.x[0],b.x[0]), Math.max(a.x[1],b.x[1])],
                               y:[Math.min(a.y[0],b.y[0]), Math.max(a.y[1],b.y[1])],
                               z:[Math.min(a.z[0],b.z[0]), Math.max(a.z[1],b.z[1])] });
@@ -1748,20 +1802,18 @@ function flyTo(name, dur=1.4){
   const key = viewKey(name);
   document.querySelectorAll('[data-view]').forEach(b=> b.classList.toggle('on', viewKey(b.dataset.view) === key));
 }
-/* the 客房 chip steps through its angles instead of jumping to one view */
-const chipGuest = document.querySelector('[data-view="guestroom1"]');
-function showGuestAngle(i){
-  const id = GUEST_ANGLES[i];
-  chipGuest.textContent = '客房 Guest Room · ' + GUEST_TAGS[id];
+/* a chip that owns several angles steps through them instead of jumping */
+function cycleGroup(key){
+  const g = GROUPS[key]; if(!g) return;
+  const i = g.ids.indexOf(currentView);
+  const id = g.ids[(i < 0 ? 0 : i + 1) % g.ids.length];
+  document.querySelector(g.chip).textContent = g.base + ' · ' + g.tags[id];
   flyTo(id);
-}
-function cycleGuestRoom(){
-  const i = GUEST_ANGLES.indexOf(currentView);
-  showGuestAngle((i < 0 ? 0 : i + 1) % GUEST_ANGLES.length);
 }
 document.querySelectorAll('[data-view]').forEach(b=> b.addEventListener('click', ()=>{
   stopTour();
-  if(viewKey(b.dataset.view) === 'guestroom') cycleGuestRoom();
+  const k = viewKey(b.dataset.view);
+  if(GROUPS[k]) cycleGroup(k);
   else flyTo(b.dataset.view);
 }));
 controls.addEventListener('start', ()=>{ stopTour(); });
@@ -1787,7 +1839,8 @@ btnSpin.addEventListener('click', ()=>{
 window.addEventListener('keydown', e=>{
   const map = { '1':'entrance', '2':'sofa', '3':'dining', '4':'tv', '5':'passage', '6':'top', '7':'ceiling', '8':'kitchen' };
   if(map[e.key]){ stopTour(); flyTo(map[e.key]); }
-  if(e.key === '9'){ stopTour(); cycleGuestRoom(); }
+  if(e.key === '9'){ stopTour(); cycleGroup('guestroom'); }
+  if(e.key === '0'){ stopTour(); cycleGroup('master'); }
   if(e.key === 'n' || e.key === 'N') setNight(!state.night);
 });
 

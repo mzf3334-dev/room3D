@@ -25,16 +25,20 @@ Internet is needed on first load — three.js r170 is pulled from the jsDelivr C
 | Drag | Orbit |
 | Wheel / pinch | Zoom |
 | Right-drag | Pan |
-| Keys `1`–`9` | Camera presets (Entrance / Sofa / Dining / TV / Passage / Top / Ceiling / Kitchen / Guest Room) |
+| Keys `1`–`9`, `0` | Camera presets (Entrance / Sofa / Dining / TV / Passage / Top / Ceiling / Kitchen) + bedroom angles |
 | Key `N` | Day ⇄ Night |
 
 The page opens on the **Entrance** view — as if you have just stepped in through the 大門 — and
 **天花 Ceiling** (key `7`) drops the camera low and looks up at the ceiling, while **廚房 Kitchen**
 (key `8`) steps through the 廚房門 into the galley kitchen.
 
-The **客房 Guest Room** chip (key `9`) is a small room, so instead of one tight shot it **steps
-through four angles** on each click — **門口** (from the doorway) ➜ **全景** (the whole wooden loft)
-➜ **上下床** (bed over storage) ➜ **書檯窗台** (desk + marble window board).
+The **客房 Guest Room** chip (key `9`) and the **主人房 Master Bedroom** chip (key `0`) are small rooms,
+so instead of one tight shot each **steps through four angles** on every click:
+
+* 客房 — **門口** (from the doorway) ➜ **全景** (the whole wooden loft) ➜ **上下床** (bed over storage)
+  ➜ **書檯窗台** (desk + marble window board)
+* 主人房 — **門口** ➜ **全景** (a wide sweep of the room) ➜ **上下床** (the wooden bunk) ➜ **窗台大櫃**
+  (the 雲石窗台 with the floor-to-ceiling wooden cabinet)
 
 On-screen chips: camera presets, **🚪 廚房趟門** and **❄️ 冷氣拉門** (slide the kitchen door shut /
 draw the A/C cover — the cover stays shut in winter), **🌙 Night** (cross-fades the whole light rig),
@@ -77,6 +81,10 @@ reads, left to right, exactly as drawn:
   beside the cabinet, tucked under the **雲石窗台** (marble window board) that runs along the desk's
   left. The desk chair, wardrobe and the wall's hanging jacket finish the room. Four camera angles
   (門口 / 全景 / 上下床 / 書檯窗台) step through so the whole room can be seen.
+* **主人房 Master bedroom (key `0`)** — straight across the passage from the 廁所門: a **wooden bunk
+  bed** (上下木床 — two bunks with the guard rail and ladder, storage boxes underneath), a **雲石窗台**
+  on the window wall and a **floor-to-ceiling wooden cabinet** standing beside it. Four camera angles
+  (門口 / 全景 / 上下床 / 窗台大櫃) step through so the whole room can be seen.
 * **Entry corner & rooms** — shoes, umbrella stand and coat hooks beside the west door; behind the
   TV wall is a fitted galley kitchen — **double-zone induction hob + 抽氣機 hood**, sink with mixer
   tap, **washing machine under the worktop**, fridge with its magnets and tea towels, rice cooker,
