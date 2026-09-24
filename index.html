@@ -87,7 +87,7 @@
 
 <div id="hint" class="card">
   <b>拖曳</b> 旋轉 · <b>滾輪</b> 縮放 · <b>右鍵</b> 平移<br/>
-  鍵盤 <b>1–5</b> 視角 · <b>N</b> 日夜
+  鍵盤 <b>1–6</b> 視角 · <b>N</b> 日夜
 </div>
 
 <div id="panel" class="card">
@@ -97,7 +97,13 @@
     <button class="chip" data-view="sofa">梳化 Sofa</button>
     <button class="chip" data-view="dining">餐桌 Dining</button>
     <button class="chip" data-view="tv">電視 TV</button>
+    <button class="chip" data-view="passage">過道 Passage</button>
     <button class="chip" data-view="top">俯覽 Top</button>
+  </div>
+  <div class="row">
+    <span class="lab">Doors</span>
+    <button class="chip" id="btnKitchen">🚪 廚房趟門 Kitchen slide</button>
+    <button class="chip" id="btnAcCover">❄️ 冷氣拉門 A/C cover</button>
   </div>
   <div class="row">
     <span class="lab">Mode</span>
@@ -126,15 +132,26 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
    A Hong Kong family flat, 2房1廳 · living room ≈ 4.25 m × 2.60 m
    Everything below is procedural geometry. No texture maps, no models.
 
-   Layout is taken from the reference sketch (images/tv_cabinet.jpg) and the
-   site photos. The NORTH wall is the 電視牆 (TV wall):
+   Layout is taken from the owner's sketch and the site photos. The NORTH wall
+   is the 電視牆 (TV wall):
 
      廚房門 │ 中空櫃 │  電視櫃 = 白色飾牆 + 冷氣窗(窗口式冷氣) + 電視  │ 廁門貨架 │ 廁所門
      0.70m    0.50m              1.95m (云石窗台 ≈ 2 m)               0.40m      0.70m
 
-   The SOUTH wall carries the main window (≈ 3 m, 云石窗台) — the sofa sits
-   with its back to it, facing the TV wall. The entrance door is on the EAST
-   wall. There is no coffee table and no ceiling fan.
+   The 廚房門 is a 趟門 (sliding door) on a room-side track, and the 冷氣窗 has a
+   two-panel sliding cover (拉門) with a row of 吊櫃 above it.
+
+   The 大門 (main door) is on the WEST wall, between the kitchen door and the
+   飯台: step in and the dining table (backing onto the west wall) is on your
+   right, the kitchen door on your left.
+
+   The SOUTH wall carries the main window (≈ 3 m, 云石窗台) — the sofa sits with
+   its back to it, facing the TV wall, and the 到頂大柜 (floor-to-ceiling cabinet:
+   sliding doors below, hinged doors above) stands to the sofa's right.
+
+   The EAST wall opens (at its north end) into a short 過道: the 廁所門 faces the
+   passage from the north, the 主人房門 sits directly opposite it, and the 客房門
+   is in the middle of the passage. There is no coffee table and no ceiling fan.
    ===================================================================== */
 
 /* ---------- seeded pseudo-random (reproducible detail) ---------- */
@@ -156,7 +173,8 @@ const SB0 = TV1,       SB1 = SB0 + 0.40;      // 廁門貨架    open book shelf
 const TD0 = SB1,       TD1 = X1;              // 廁所門      toilet doorway
 const TVC     = (TV0 + TV1) / 2;              // centre line of the TV composition
 const ACW     = 1.30;                         // 冷氣窗 opening width
-const ACY0    = 1.88, ACY1 = 2.36;            // 冷氣窗 opening (height band)
+const ACY0    = 1.68, ACY1 = 2.16;            // 冷氣窗 opening (height band)
+const CAB_Y0  = ACY1 + 0.05, CAB_Y1 = 2.52;   // 吊櫃 row hanging above the 冷氣窗
 const CON_Y1  = 0.74, CON_Y2 = 0.42;          // TV-cabinet shelf levels
 const CON_D   = 0.42;                         // TV-cabinet depth
 const MARBLE  = 0.034;                        // 云石 slab thickness
@@ -164,8 +182,14 @@ const MARBLE  = 0.034;                        // 云石 slab thickness
 /* ---------- main window (south wall) — ≈ 3 m of 云石窗台 ---------- */
 const WIN_X0 = -1.50, WIN_X1 = 1.50, WIN_Y0 = 0.86, WIN_Y1 = 2.26;
 
-/* ---------- main door (east wall) ---------- */
-const ED0 = -1.05, ED1 = -0.17;
+/* ---------- main door (west wall) — between the 飯台 and the 廚房門 ---------- */
+const WD0 = -0.88, WD1 = 0.00;
+
+/* ---------- 過道 (passage) beyond the east wall: 廁所門 ⇄ 主人房門 ---------- */
+const PAS_Z0 = -1.30, PAS_Z1 = -0.34;         // passage band along z
+const PAS_X1 = 4.10;                          // far end of the passage
+const GD0 = 2.85, GD1 = 3.55;                 // 客房門 — middle of the passage (north side)
+const MD0 = 2.32, MD1 = 3.02;                 // 主人房門 — opposite the 廁所門 (south side)
 
 /* ---------- renderer / scene / camera ---------- */
 const app = document.getElementById('app');
@@ -184,10 +208,10 @@ const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0xdde8f0, 26, 88);
 
 const camera = new THREE.PerspectiveCamera(58, window.innerWidth/window.innerHeight, 0.05, 220);
-camera.position.set(1.55, 1.62, -0.62);
+camera.position.set(1.62, 1.68, 0.62);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(-0.90, 0.90, 0.35);
+controls.target.set(-0.95, 0.85, -0.35);
 controls.enableDamping = true;
 controls.dampingFactor = 0.07;
 controls.minDistance = 0.7;
@@ -303,7 +327,7 @@ const DL = [];
   DL.push(p);
 });
 const pendantLight = new THREE.PointLight(0xffcf9a, 0, 5.0, 2);
-pendantLight.position.set(-1.25, 1.90, 0.05);
+pendantLight.position.set(X0+0.35, 1.90, 0.72);
 pendantLight.castShadow = true;
 pendantLight.shadow.mapSize.set(1024,1024);
 pendantLight.shadow.camera.near = 0.1; pendantLight.shadow.camera.far = 7;
@@ -312,9 +336,12 @@ dLight(pendantLight, 0, 3.0);
 
 const cabLight  = dLight(new THREE.PointLight(0xffe0b0, 0, 1.9, 2), 0.2, 0.9);   cabLight.position.set(-1.18, 1.80, Z0+0.34);
 const kitLight  = dLight(new THREE.PointLight(0xffd9a8, 0, 6.0, 2), 0.3, 2.0);   kitLight.position.set(-1.75, 2.15, -2.1);
-const bathLight = dLight(new THREE.PointLight(0xeef4ff, 0, 5.0, 2), 0.25, 1.4);  bathLight.position.set(1.75, 2.1, -2.0);
-const lampLight = dLight(new THREE.PointLight(0xffd2a0, 0, 3.2, 2), 0, 1.1);     lampLight.position.set(-1.90, 1.05, 0.80);
-const tvLight   = dLight(new THREE.PointLight(0x7fb2ff, 0, 3.0, 2), 0, 0.6);     tvLight.position.set(TVC, 1.30, Z0+0.60);
+const bathLight = dLight(new THREE.PointLight(0xeef4ff, 0, 5.0, 2), 0.42, 1.4);  bathLight.position.set(1.75, 2.1, -2.0);
+const lampLight = dLight(new THREE.PointLight(0xffd2a0, 0, 3.2, 2), 0, 1.1);     lampLight.position.set(X1-0.21, 1.05, -0.21);
+const tvLight   = dLight(new THREE.PointLight(0x7fb2ff, 0, 3.0, 2), 0, 0.6);     tvLight.position.set(TVC, 1.22, Z0+0.60);
+const passLight = dLight(new THREE.PointLight(0xffd9a8, 0, 4.6, 2), 0.78, 1.5);  passLight.position.set(X1+1.0, 2.28, -0.82);
+const gstLight  = dLight(new THREE.PointLight(0xffe0b0, 0, 5.4, 2), 0.30, 1.6);  gstLight.position.set(3.45, 2.18, -2.45);
+const mstLight  = dLight(new THREE.PointLight(0xffe0b0, 0, 5.4, 2), 0.30, 1.6);  mstLight.position.set(3.30, 2.18, 0.90);
 
 /* sky dome — procedural gradient shader */
 const skyUni = {
@@ -424,9 +451,9 @@ shell.add(box(L+0.4, 0.014, D+0.4, std({color:0x3a2418, roughness:1}), 0, 0.007,
   shell.add(inst);
 }
 
-/* ceiling + bulkheads (over the TV wall and over the window) */
+/* ceiling + bulkheads (slim 假天花 over the TV wall, pelmet over the window) */
 shell.add(box(L+0.4, 0.1, D+0.4, M.ceil, 0, H+0.05, 0));
-shell.add(box(L+0.02, 0.26, 0.40, M.ceil, 0, H-0.13, Z0+0.20));   // 假天花 over the TV wall
+shell.add(box(L+0.02, 0.10, 0.40, M.ceil, 0, H-0.05, Z0+0.20));   // 假天花 — the 吊櫃 row hangs to it
 shell.add(box(L+0.02, 0.20, 0.32, M.ceil, 0, H-0.10, Z1-0.16));   // pelmet over the window
 
 /* walls — NORTH wall is the TV wall:  廚房門 | 中空櫃 | 電視 | 廁門貨架 | 廁所門 */
@@ -439,11 +466,13 @@ shell.add(box(ACW, ACY0, T, M.paint, TVC, ACY0/2, Z0-T/2));         // band belo
 shell.add(box(KD1-KD0, H-2.06, T, M.paint, (KD0+KD1)/2, (H+2.06)/2, Z0-T/2));   // 廚房門
 shell.add(box(TD1-TD0, H-2.04, T, M.paint, (TD0+TD1)/2, (H+2.04)/2, Z0-T/2));   // 廁所門
 
-/* WEST wall (solid) + EAST wall carrying the main door */
-shell.add(box(T, H, D+0.24, M.paint, X0-T/2, H/2, 0));
-const wallE = [[Z0-0.12, ED0], [ED1, Z1+0.12]];
+/* WEST wall (carries the 大門) + EAST wall (opens into the 過道) */
+const wallW = [[Z0-0.12, WD0], [WD1, Z1+0.12]];
+wallW.forEach(([a,b])=> shell.add(box(T, H, b-a, M.paint, X0-T/2, H/2, (a+b)/2)));
+shell.add(box(T, H-2.06, WD1-WD0, M.paint, X0-T/2, (H+2.06)/2, (WD0+WD1)/2));   // header over 大門
+const wallE = [[Z0-0.12, PAS_Z0], [PAS_Z1, Z1+0.12]];
 wallE.forEach(([a,b])=> shell.add(box(T, H, b-a, M.paint, X1+T/2, H/2, (a+b)/2)));
-shell.add(box(T, H-2.06, ED1-ED0, M.paint, X1+T/2, (H+2.06)/2, (ED0+ED1)/2));
+shell.add(box(T, H-2.06, PAS_Z1-PAS_Z0, M.paint, X1+T/2, (H+2.06)/2, (PAS_Z0+PAS_Z1)/2));   // 過道 header
 
 /* SOUTH wall = window wall, opening x -1.50..1.50, y 0.86..2.26 */
 shell.add(box(WIN_X0-(X0-0.12), H, T, M.paint, ((X0-0.12)+WIN_X0)/2, H/2, Z1+T/2));
@@ -455,9 +484,9 @@ shell.add(box(WIN_X1-WIN_X0, H-WIN_Y1, T, M.paint, (WIN_X0+WIN_X1)/2, (H+WIN_Y1)
 const skirtY = 0.0375, skirtT = 0.013;
 wallN.forEach(([a,b])=> shell.add(box(b-a, 0.075, skirtT, M.skirt, (a+b)/2, skirtY, Z0+skirtT/2)));
 wallE.forEach(([a,b])=> shell.add(box(skirtT, 0.075, b-a, M.skirt, X1-skirtT/2, skirtY, (a+b)/2)));
+wallW.forEach(([a,b])=> shell.add(box(skirtT, 0.075, b-a, M.skirt, X0+skirtT/2, skirtY, (a+b)/2)));
 shell.add(box(WIN_X0-X0, 0.075, skirtT, M.skirt, (X0+WIN_X0)/2, skirtY, Z1-skirtT/2));
 shell.add(box(X1-WIN_X1, 0.075, skirtT, M.skirt, (WIN_X1+X1)/2, skirtY, Z1-skirtT/2));
-shell.add(box(skirtT, 0.075, D, M.skirt, X0+skirtT/2, skirtY, 0));
 
 /* =====================================================================
    2 · MAIN WINDOW (south wall) — 云石窗台, frame, glass, grille, curtains
@@ -514,25 +543,37 @@ const curtains = [];
 });
 
 /* =====================================================================
-   3 · DOORS — 廚房門 + 廁所門 (both on the TV wall) and the main door (east)
+   3 · DOORS — 廚房趟門 + 廁所門 (TV wall), the 大門 (west wall) and the two
+   bedroom doors that face each other across the 過道
    ===================================================================== */
 
-/* --- 廚房門 · kitchen doorway, west end of the TV wall (light-oak frame) --- */
+/* --- 廚房門 · kitchen doorway — now a 趟門 (sliding leaf on a room-side track) --- */
+const kitchenLeaf = new THREE.Group();           // slid by the Open / Close chips
 {
   const g = new THREE.Group();
   const z = Z0 - T/2;
+  /* light-oak surround */
   g.add(box(0.06, 2.06, T+0.03, M.oakPale, KD0+0.03, 1.03, z));
   g.add(box(0.06, 2.06, T+0.03, M.oakPale, KD1-0.03, 1.03, z));
   g.add(box(KD1-KD0, 0.08, T+0.03, M.oakPale, (KD0+KD1)/2, 2.10, z));
   g.add(box(KD1-KD0+0.06, 0.025, 0.24, M.oakPale, (KD0+KD1)/2, 0.012, Z0+0.01));   // 門檻
-  /* leaf parked open against the kitchen wall */
-  const hinge = new THREE.Group();
-  hinge.position.set(KD1-0.03, 0, Z0-0.04);
-  hinge.rotation.y = 96*DEG;
-  hinge.add(box(0.66, 2.00, 0.04, M.whiteGloss, -0.33, 1.00, 0));
-  hinge.add(cyl(0.010, 0.010, 0.13, M.steel, -0.60, 1.00, 0.05, 10));
-  g.add(hinge);
+  /* 趟門路軌 — the track stands off the wall by the depth of the 中空櫃, so the
+     leaf parks in front of that cabinet when the doorway is open */
+  g.add(box(1.78, 0.045, 0.075, M.alu, KD1-0.36, 2.085, Z0+0.40));
+  g.add(box(1.82, 0.016, 0.095, M.steelDark, KD1-0.36, 2.115, Z0+0.40));
   shell.add(g);
+
+  /* the sliding leaf — oak frame with frosted glass */
+  const LW = 0.78, LH = 2.00, tx = 0.040;
+  kitchenLeaf.add(box(LW, 0.09, tx, M.oakPale, 0, 0.045, 0));
+  kitchenLeaf.add(box(LW, 0.09, tx, M.oakPale, 0, LH-0.045, 0));
+  kitchenLeaf.add(box(0.09, LH, tx, M.oakPale, -LW/2+0.045, LH/2, 0));
+  kitchenLeaf.add(box(0.09, LH, tx, M.oakPale,  LW/2-0.045, LH/2, 0));
+  kitchenLeaf.add(box(LW-0.18, LH-0.18, 0.012, M.frosted, 0, LH/2, 0));           // 磨砂玻璃
+  kitchenLeaf.add(cyl(0.010, 0.010, 0.26, M.steel, LW/2-0.11, 1.02, 0.035, 10));  // 拉手
+  kitchenLeaf.position.set(-1.06, FL, Z0+0.40);    // open: parked over the 中空櫃
+  kitchenLeaf.traverse(o=>{ if(o.isMesh){ o.castShadow = true; o.receiveShadow = true; } });
+  shell.add(kitchenLeaf);
 }
 
 /* --- 廁所門 · toilet doorway, east end of the TV wall --- */
@@ -543,35 +584,70 @@ const curtains = [];
   g.add(box(0.06, 2.04, T+0.02, M.walnut, TD0+0.03, 1.02, z));
   g.add(box(0.06, 2.04, T+0.02, M.walnut, TD1-0.03, 1.02, z));
   g.add(box(TD1-TD0, 0.07, T+0.02, M.walnut, (TD0+TD1)/2, 2.075, z));
-  /* leaf, half open into the room */
+  /* leaf, hinged on the east jamb, opened into the toilet (keeps the 過道 clear) */
   const hinge = new THREE.Group();
-  hinge.position.set(TD0+0.03, 0, Z0-0.03);
-  hinge.rotation.y = -62*DEG;
-  hinge.add(box(0.62, 1.98, 0.04, M.whiteSatin, 0.31, 0.99, 0));
-  hinge.add(box(0.40, 1.30, 0.012, M.mirror, 0.31, 1.28, 0.026));    // mirror panel
-  hinge.add(cyl(0.011, 0.011, 0.13, M.steel, 0.56, 0.99, 0.05, 10));
+  hinge.position.set(TD1-0.03, 0, Z0-0.03);
+  hinge.rotation.y = -75*DEG;
+  hinge.add(box(0.62, 1.98, 0.04, M.whiteSatin, -0.31, 0.99, 0));
+  hinge.add(box(0.40, 1.30, 0.012, M.mirror, -0.31, 1.28, 0.026));    // mirror panel
+  hinge.add(cyl(0.011, 0.011, 0.13, M.steel, -0.56, 0.99, 0.05, 10));
   g.add(hinge);
   shell.add(g);
 }
 
-/* --- main door (walnut) on the EAST wall --- */
+/* --- 大門 · main door (walnut) on the WEST wall, between 飯台 and 廚房門 --- */
 {
   const g = new THREE.Group();
-  const dx = X1 + T/2;
-  g.add(box(T+0.03, 2.06, 0.06, M.walnut, dx, 1.03, ED0+0.03));
-  g.add(box(T+0.03, 2.06, 0.06, M.walnut, dx, 1.03, ED1-0.03));
-  g.add(box(T+0.03, 0.08, ED1-ED0+0.12, M.walnut, dx, 2.10, (ED0+ED1)/2));
-  g.add(box(T+0.06, 0.02, ED1-ED0, std({color:0x4a3a2a, roughness:0.9}), dx, 0.01, (ED0+ED1)/2));
+  const dx = X0 - T/2;
+  g.add(box(T+0.03, 2.06, 0.06, M.walnut, dx, 1.03, WD0+0.03));
+  g.add(box(T+0.03, 2.06, 0.06, M.walnut, dx, 1.03, WD1-0.03));
+  g.add(box(T+0.03, 0.08, WD1-WD0+0.12, M.walnut, dx, 2.10, (WD0+WD1)/2));
+  g.add(box(T+0.06, 0.02, WD1-WD0, std({color:0x4a3a2a, roughness:0.9}), dx, 0.01, (WD0+WD1)/2));
+  /* leaf, hinged on the north jamb, opened into the room */
   const hinge = new THREE.Group();
-  hinge.position.set(X1-0.02, 0, ED1-0.03);
-  hinge.rotation.y = Math.PI/2 + 20*DEG;
-  hinge.add(box(0.82, 2.02, 0.045, M.walnut, 0.41, 1.01, 0));
-  hinge.add(box(0.012, 1.84, 0.012, std({color:0x2f2218, roughness:0.8}), 0.20, 1.01, -0.03));
-  hinge.add(box(0.012, 1.84, 0.012, std({color:0x2f2218, roughness:0.8}), 0.62, 1.01, -0.03));
-  hinge.add(cyl(0.011, 0.011, 0.13, M.steel, 0.74, 1.01, -0.05, 10));
-  hinge.add(sphere(0.012, M.brass, 0.41, 1.54, -0.03));                  // 防盜眼
+  hinge.position.set(X0+0.02, 0, WD0+0.02);
+  hinge.rotation.y = 58*DEG;
+  hinge.add(box(0.045, 2.02, 0.84, M.walnut, 0, 1.01, 0.42));
+  hinge.add(box(0.012, 1.84, 0.012, std({color:0x2f2218, roughness:0.8}), 0.033, 1.01, 0.21));
+  hinge.add(box(0.012, 1.84, 0.012, std({color:0x2f2218, roughness:0.8}), 0.033, 1.01, 0.63));
+  hinge.add(cyl(0.011, 0.011, 0.13, M.steel, 0.05, 1.01, 0.75, 10));              // 門鎖
+  hinge.add(sphere(0.012, M.brass, 0.03, 1.54, 0.42));                            // 防盜眼
   g.add(hinge);
   shell.add(g);
+}
+
+/* --- 客房門 · guest-room door, middle of the 過道 (north side of the passage) --- */
+{
+  const g = new THREE.Group();
+  const dz = PAS_Z0 - T/2;
+  g.add(box(0.06, 2.04, T+0.03, M.walnut, GD0+0.03, 1.02, dz));
+  g.add(box(0.06, 2.04, T+0.03, M.walnut, GD1-0.03, 1.02, dz));
+  g.add(box(GD1-GD0+0.12, 0.07, T+0.03, M.walnut, (GD0+GD1)/2, 2.075, dz));
+  /* leaf, hinged on the east jamb, opened into the guest room */
+  const hinge = new THREE.Group();
+  hinge.position.set(GD1-0.03, 0, PAS_Z0-0.02);
+  hinge.rotation.y = -38*DEG;
+  hinge.add(box(0.66, 1.98, 0.045, M.whiteSatin, -0.33, 0.99, 0));
+  hinge.add(cyl(0.010, 0.010, 0.26, M.steel, -0.60, 1.00, 0.04, 10));
+  g.add(hinge);
+  scene.add(g);
+}
+
+/* --- 主人房門 · master-bedroom door — directly opposite the 廁所門 --- */
+{
+  const g = new THREE.Group();
+  const dz = PAS_Z1 + T/2;
+  g.add(box(0.06, 2.04, T+0.03, M.walnut, MD0+0.03, 1.02, dz));
+  g.add(box(0.06, 2.04, T+0.03, M.walnut, MD1-0.03, 1.02, dz));
+  g.add(box(MD1-MD0+0.12, 0.07, T+0.03, M.walnut, (MD0+MD1)/2, 2.075, dz));
+  /* leaf, hinged on the east jamb, opened into the master bedroom */
+  const hinge = new THREE.Group();
+  hinge.position.set(MD1-0.03, 0, PAS_Z1+0.02);
+  hinge.rotation.y = 38*DEG;
+  hinge.add(box(0.66, 1.98, 0.045, M.whiteSatin, -0.33, 0.99, 0));
+  hinge.add(cyl(0.010, 0.010, 0.26, M.steel, -0.60, 1.00, 0.04, 10));
+  g.add(hinge);
+  scene.add(g);
 }
 
 /* =====================================================================
@@ -693,6 +769,103 @@ const curtains = [];
   seat.rotation.x = Math.PI/2; seat.position.set(cx-0.35, 0.40, z0+0.90); B.add(seat);
   B.add(cyl(0.14, 0.14, 0.02, M.ceramic, cx-0.35, 0.42, z0+0.77, 24));
   B.add(cyl(0.08, 0.08, 0.02, M_glowBath, cx, 2.29, z0+0.85, 24));
+  shadows(B); scene.add(B);
+}
+
+/* =====================================================================
+   5b · 過道 (passage) beyond the east wall — the 廁所門 faces it from the
+   north, the 主人房門 sits directly opposite, the 客房門 is in the middle
+   ===================================================================== */
+{
+  const P = new THREE.Group();
+  const x0 = X1, x1 = PAS_X1, z0 = PAS_Z0, z1 = PAS_Z1;
+  const cx = (x0+x1)/2, cz = (z0+z1)/2, w = x1-x0, d = z1-z0, wallH = 2.45;
+  P.add(box(w, 0.02, d, std({ color:0x9a6b3f, roughness:0.55 }), cx, FL, cz));   // wood floor
+  P.add(box(w, 0.1, d, M.ceil, cx, wallH, cz));                                  // ceiling
+  /* north side — carries the 客房門 */
+  [[x0-0.1, GD0], [GD1, x1+0.1]].forEach(([a,b])=> P.add(box(b-a, wallH, 0.1, M.paint, (a+b)/2, wallH/2, z0-0.05)));
+  P.add(box(GD1-GD0, wallH-2.04, 0.1, M.paint, (GD0+GD1)/2, (wallH+2.04)/2, z0-0.05));
+  /* south side — carries the 主人房門, straight across from the 廁所門 */
+  [[x0-0.1, MD0], [MD1, x1+0.1]].forEach(([a,b])=> P.add(box(b-a, wallH, 0.1, M.paint, (a+b)/2, wallH/2, z1+0.05)));
+  P.add(box(MD1-MD0, wallH-2.04, 0.1, M.paint, (MD0+MD1)/2, (wallH+2.04)/2, z1+0.05));
+  /* far end of the passage */
+  P.add(box(0.1, wallH, d+0.2, M.paint, x1+0.05, wallH/2, cz));
+  P.add(box(0.5, 0.02, 0.26, std({ color:0x6f7d8a, roughness:1 }), x1-0.3, FL+0.012, cz));   // runner
+  /* passage downlights */
+  [-0.22, 0.22].forEach(dz=>{
+    P.add(cyl(0.05, 0.05, 0.014, M.skirt, cx-0.3, wallH-0.007, cz+dz, 18));
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(0.036, 18), M_glowWarm);
+    disc.rotation.x = Math.PI/2; disc.position.set(cx-0.3, wallH-0.015, cz+dz);
+    P.add(disc);
+  });
+  shadows(P); scene.add(P);
+}
+
+/* --- 客房 guest room (beyond the 客房門) --- */
+{
+  const B = new THREE.Group();
+  const x0 = 2.55, x1 = 4.30, z0 = -3.55, z1 = PAS_Z0 - T;      // interior
+  const cx = (x0+x1)/2, cz = (z0+z1)/2, w = x1-x0, d = z1-z0;
+  B.add(box(w, 0.02, d, std({ color:0xb08a5a, roughness:0.6 }), cx, FL, cz));
+  B.add(box(w, 0.1, d, M.ceil, cx, 2.35, cz));
+  B.add(box(w+0.2, 2.4, 0.1, M.paint, cx, 1.2, z0-0.05));                     // far (north) wall
+  B.add(box(0.1, 2.4, d+0.2, M.paint, x0-0.05, 1.2, cz));
+  B.add(box(0.1, 2.4, d+0.2, M.paint, x1+0.05, 1.2, cz));
+  /* window + daylight on the far wall */
+  B.add(box(1.0, 1.15, 0.05, M.alu, cx, 1.55, z0+0.03));
+  B.add(box(0.94, 1.09, 0.02, M.glass, cx, 1.55, z0+0.05));
+  B.add(box(1.10, 1.25, 0.02, emissiveMat(0xdfe9f2, 0.9, 0.10), cx, 1.55, z0-0.04));
+  /* single bed (platform + mattress + duvet + pillow) */
+  B.add(box(0.95, 0.30, 1.90, M.whiteSatin, 3.72, 0.16, -2.50));
+  B.add(box(0.92, 0.14, 1.84, M.white, 3.72, 0.38, -2.50));
+  B.add(box(0.92, 0.06, 1.20, std({ color:0x8fa8c8, roughness:0.95 }), 3.72, 0.46, -2.22));
+  B.add(roundedBox(0.52, 0.10, 0.30, 0.04, M.cushionCrm).translateX(3.72).translateY(0.50).translateZ(-3.10));
+  B.add(box(0.98, 0.55, 0.05, M.oak, 3.72, 0.28, -3.47));                     // headboard
+  /* wardrobe + rug + ceiling lamp */
+  B.add(box(0.60, 2.20, 0.80, M.whiteSatin, 2.90, 1.10, -3.05));
+  B.add(box(0.03, 1.80, 0.03, M.steelDark, 2.63, 1.05, -2.88));
+  B.add(box(0.03, 1.80, 0.03, M.steelDark, 2.63, 1.05, -3.22));
+  B.add(box(0.90, 0.012, 0.60, std({ color:0xc8bfa8, roughness:1 }), 3.60, FL+0.006, -2.10));
+  B.add(cyl(0.09, 0.09, 0.03, M_glowWarm, 3.55, 2.32, -2.40, 22));
+  shadows(B); scene.add(B);
+}
+
+/* --- 主人房 master bedroom (beyond the 主人房門) --- */
+{
+  const B = new THREE.Group();
+  const x0 = 2.25, x1 = 4.30, z0 = PAS_Z1 + T, z1 = 1.90;       // interior
+  const cx = (x0+x1)/2, cz = (z0+z1)/2, w = x1-x0, d = z1-z0;
+  B.add(box(w, 0.02, d, std({ color:0xb08a5a, roughness:0.6 }), cx, FL, cz));
+  B.add(box(w, 0.1, d, M.ceil, cx, 2.35, cz));
+  B.add(box(w+0.2, 2.4, 0.1, M.paint, cx, 1.2, z1+0.05));                     // far (south) wall
+  B.add(box(0.1, 2.4, d+0.2, M.paint, x0-0.05, 1.2, cz));
+  B.add(box(0.1, 2.4, d+0.2, M.paint, x1+0.05, 1.2, cz));
+  /* window + daylight on the east wall */
+  B.add(box(0.05, 1.15, 1.20, M.alu, x1-0.03, 1.55, 0.95));
+  B.add(box(0.02, 1.09, 1.14, M.glass, x1-0.05, 1.55, 0.95));
+  B.add(box(0.02, 1.25, 1.30, emissiveMat(0xdfe9f2, 0.9, 0.10), x1+0.06, 1.55, 0.95));
+  /* double bed, head to the far wall */
+  B.add(box(1.38, 0.32, 1.90, M.whiteSatin, 3.30, 0.17, 0.95));
+  B.add(box(1.32, 0.16, 1.84, M.white, 3.30, 0.41, 0.95));
+  B.add(box(1.32, 0.07, 1.10, std({ color:0xd8cfc0, roughness:0.95 }), 3.30, 0.50, 0.70));
+  B.add(roundedBox(0.48, 0.11, 0.30, 0.04, M.cushionCrm).translateX(2.95).translateY(0.55).translateZ(1.66));
+  B.add(roundedBox(0.48, 0.11, 0.30, 0.04, M.cushionSage).translateX(3.62).translateY(0.55).translateZ(1.66));
+  B.add(box(1.44, 0.60, 0.05, M.oak, 3.30, 0.30, 1.88));                      // headboard
+  /* wardrobe against the west wall + bedside table + lamp */
+  B.add(box(0.60, 2.20, 1.00, M.whiteSatin, 2.58, 1.10, 0.80));
+  B.add(box(0.03, 1.80, 0.03, M.steelDark, 2.85, 1.05, 0.40));
+  B.add(box(0.03, 1.80, 0.03, M.steelDark, 2.85, 1.05, 1.20));
+  B.add(box(0.34, 0.44, 0.34, M.oakPale, 4.10, 0.22, 1.68));
+  const lamp = new THREE.Group();
+  lamp.add(cyl(0.06, 0.08, 0.02, M.brass, 0, 0.01, 0, 16));
+  lamp.add(cyl(0.008, 0.008, 0.16, M.brass, 0, 0.09, 0, 8));
+  const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.085, 0.11, 18, 1, true), M.linen);
+  shade.position.y = 0.22; lamp.add(shade);
+  lamp.add(sphere(0.016, M_glowLamp, 0, 0.21, 0, 10));
+  lamp.position.set(4.10, 0.44, 1.68);
+  B.add(lamp);
+  B.add(box(1.10, 0.012, 0.70, std({ color:0xc8bfa8, roughness:1 }), 3.60, FL+0.006, 0.40));
+  B.add(cyl(0.09, 0.09, 0.03, M_glowWarm, 3.30, 2.32, 0.90, 22));
   shadows(B); scene.add(B);
 }
 
@@ -844,7 +1017,8 @@ const cat = new THREE.Group();
   shadows(C); furn.add(C);
 }
 
-/* ---------- 白色飾牆 + 云石窗台 + 冷氣窗(窗口式冷氣) + 電視 ---------- */
+/* ---------- 白色飾牆 + 云石窗台 + 冷氣窗(窗口式冷氣) + 吊櫃 + 電視 ---------- */
+const acCoverPanels = [];                        // slid by the Open / Close chips
 {
   /* raised white feature panel */
   shell.add(box(TV1-TV0, 2.30, 0.03, M.wallPanel, TVC, 1.15, Z0+0.016));
@@ -877,9 +1051,37 @@ const cat = new THREE.Group();
   ac.position.set(TVC, ACY0, Z0-0.055);
   shadows(ac); shell.add(ac);
 
-  /* 電視 — wall mounted between the TV cabinet and the 冷氣窗 */
+  /* 冷氣拉門 — two panels that slide shut across the A/C (closed in winter) */
+  shell.add(box(ACW+0.12, 0.03, 0.06, M.alu, TVC, ACY1+0.035, Z0+0.125));      // 上軌
+  shell.add(box(ACW+0.12, 0.024, 0.06, M.alu, TVC, ACY0-0.030, Z0+0.125));     // 下軌
+  [0, 1].forEach(i=>{
+    const p = new THREE.Group();
+    const PW = 0.34, PH = 0.52;
+    p.add(box(PW, PH, 0.022, M.whiteGloss, 0, 0, 0));
+    p.add(box(PW-0.05, PH-0.07, 0.008, std({ color:0xe9ecee, roughness:0.4 }), 0, 0, 0.013));
+    p.add(box(PW-0.12, 0.014, 0.012, M.steel, 0, 0.055, 0.021));                // 拉手槽
+    p.position.set(TVC + (i ? 1 : -1)*0.49, (ACY0+ACY1)/2, Z0+0.125);           // open
+    acCoverPanels.push(p);
+    shell.add(p);
+  });
+
+  /* 吊櫃 — a row of wall cabinets above the 冷氣窗, hung to the 假天花 */
+  const U = new THREE.Group();
+  const uw = TV1-TV0-0.06, uy = (CAB_Y0+CAB_Y1)/2, uh = CAB_Y1-CAB_Y0;
+  U.add(box(uw, uh, 0.34, M.whiteSatin, TVC, uy, Z0+0.17));                     // 櫃體
+  U.add(box(uw+0.02, 0.02, 0.36, M.white, TVC, CAB_Y1-0.01, Z0+0.17));          // 頂板
+  const nd = 4, dw = (uw-0.05)/nd;
+  for(let i=0;i<nd;i++){
+    const x = TVC - uw/2 + 0.025 + dw/2 + i*(dw+0.01);
+    U.add(box(dw, uh-0.035, 0.018, M.whiteGloss, x, uy, Z0+0.345));             // 櫃門
+    U.add(box(dw*0.45, 0.014, 0.02, M.steel, x, CAB_Y0+0.055, Z0+0.357));      // 橫拉手
+  }
+  U.add(box(uw, 0.02, 0.05, M_glowStrip, TVC, CAB_Y0+0.012, Z0+0.31));          // 櫃底燈帶
+  shadows(U); shell.add(U);
+
+  /* 電視 — wall mounted between the TV cabinet and the 云石窗台 */
   const TV = new THREE.Group();
-  TV.add(box(1.22, 0.72, 0.045, M.black, TVC, 1.34, Z0+0.052));
+  TV.add(box(1.22, 0.72, 0.045, M.black, TVC, 1.26, Z0+0.052));
   const uni = { uTime:{ value:0 }, uOn:{ value:0 } };
   const scr = new THREE.Mesh(
     new THREE.PlaneGeometry(1.16, 0.64),
@@ -904,9 +1106,9 @@ const cat = new THREE.Group();
         }`
     })
   );
-  scr.position.set(TVC, 1.34, Z0+0.076);
+  scr.position.set(TVC, 1.26, Z0+0.076);
   TV.add(scr);
-  TV.add(sphere(0.006, emissiveMat(0xff4433, 0.9, 1.4), TVC+0.53, 1.03, Z0+0.077));
+  TV.add(sphere(0.006, emissiveMat(0xff4433, 0.9, 1.4), TVC+0.53, 0.95, Z0+0.077));
   window.__tvUniforms = uni;
   shadows(TV); furn.add(TV);
 }
@@ -1016,51 +1218,49 @@ const cat = new THREE.Group();
   furn.add(C);
 }
 
-/* ---------- 大柜 — the big pastel drawer chest, standing to the RIGHT of the sofa ---------- */
+/* ---------- 到頂大柜 — floor-to-ceiling cabinet standing to the sofa's right.
+   Lower half: two 趟門 (sliding panels).  Upper half: normal hinged doors. ---------- */
 {
   const C = new THREE.Group();
-  const cx = X1-0.31, cz = 0.72, W = 1.10, DP = 0.62, HGT = 1.50;
-  C.add(roundedBox(DP, HGT, W, 0.015, M.whiteSatin).translateX(cx).translateY(HGT/2).translateZ(cz));
-  const rowCols = [0xf6f5f2, 0xeceae5, 0xb9b6b0, 0xe6c9cf, 0xa4b39f];
-  const rh = (HGT-0.09)/rowCols.length;
-  rowCols.forEach((col, r)=>{
-    const y = 0.06 + rh/2 + r*rh;
-    for(let c=-1;c<=1;c+=2){
-      const z = cz + c*W/4;
-      C.add(box(0.022, rh-0.028, W/2-0.04, std({ color:col, roughness:0.42 }), cx-DP/2-0.004, y, z));
-      C.add(box(0.03, 0.022, 0.13, M.steelDark, cx-DP/2-0.02, y+rh/2-0.05, z));      // 把手
-    }
+  const cz = 0.82, W = 0.92, DP = 0.62;
+  const xf = X1 - DP + 0.02;                  // 1.525 — carcass front face
+  const TOP = H - FL;                         // 到頂 — floor to ceiling
+  /* carcass, plinth and top filler */
+  C.add(box(DP-0.03, TOP-0.12, W, M.whiteSatin, X1-DP/2-0.015, (TOP-0.12)/2+0.10, cz));
+  C.add(box(DP-0.06, 0.10, W-0.06, std({ color:0xe9e7e2, roughness:0.6 }), X1-DP/2-0.03, 0.05, cz));
+  C.add(box(DP, 0.06, W, M.whiteSatin, X1-DP/2, TOP-0.03, cz));
+  /* 下櫃 — 趟門: two overlapping sliding panels */
+  const LW = W/2 + 0.03, LH = 1.16, ly = 0.10 + LH/2;
+  const p1 = box(0.022, LH, LW, M.whiteGloss, xf-0.028, ly, cz-W/4+0.015);
+  const p2 = box(0.022, LH, LW, M.whiteGloss, xf-0.004, ly, cz+W/4-0.015);
+  C.add(p1); C.add(p2);
+  C.add(box(0.010, LH-0.12, 0.014, M.panelLine, xf-0.041, ly, cz-W/4+0.015+LW/2-0.03));   // 拉手縫
+  C.add(box(0.010, LH-0.12, 0.014, M.panelLine, xf-0.017, ly, cz+W/4-0.015-LW/2+0.03));
+  C.add(box(0.010, 0.030, W-0.02, M.alu, xf-0.016, 1.285, cz));                            // 趟門上下軌
+  C.add(box(0.010, 0.030, W-0.02, M.alu, xf-0.016, 0.115, cz));
+  C.add(box(DP-0.02, 0.024, W, M.panelLine, X1-DP/2-0.01, 1.325, cz));                     // 中橫板
+  /* 上櫃 — hinged doors with long bar handles */
+  const uw = (W-0.03)/2, uy = (1.36 + TOP-0.06)/2, uh = TOP-0.06-1.36;
+  [0,1].forEach(i=>{
+    const z = cz - W/2 + 0.015 + uw/2 + i*(uw+0.015);
+    C.add(box(0.022, uh, uw, M.whiteSatin, xf-0.010, uy, z));
+    C.add(cyl(0.008, 0.008, 0.22, M.steelDark, xf-0.028, uy, z + (i? -1 : 1)*(uw/2-0.05), 10));
   });
-  /* things on top (as in the photo) */
-  C.add(cyl(0.055, 0.05, 0.14, M.ceramic, cx, HGT+0.07, cz-0.34, 18));
-  C.add(box(0.20, 0.03, 0.14, std({ color:0x9aa4ae, roughness:0.85 }), cx, HGT+0.015, cz+0.10).rotateY(-0.2));
-  const basket = cyl(0.11, 0.09, 0.12, std({ color:0xdcd4c4, roughness:1 }), cx, HGT+0.06, cz+0.30, 18);
-  C.add(basket);
-  const snake = new THREE.Group();
-  snake.add(cyl(0.05, 0.042, 0.09, M.ceramic, 0, 0.045, 0, 16));
-  for(let i=0;i<7;i++){
-    const blade = new THREE.Mesh(new THREE.ConeGeometry(0.022, rr(0.30,0.46), 6), M.leafC);
-    blade.position.set(rr(-0.03,0.03), 0.26, rr(-0.03,0.03));
-    blade.rotation.z = rr(-0.16,0.16); blade.rotation.x = rr(-0.16,0.16);
-    snake.add(blade);
-  }
-  snake.position.set(cx-0.05, HGT, cz-0.14);
-  snake.traverse(o=>{ if(o.isMesh) o.castShadow = true; });
-  C.add(snake);
   shadows(C); furn.add(C);
 }
 
-/* ---------- dining set (west end, to the LEFT of the sofa) ---------- */
+/* ---------- dining set — the 飯台 backs onto the WEST wall, just south of
+   the 大門: step in and it is on your right, the 廚房門 on your left ---------- */
 {
   const Dg = new THREE.Group();
-  const tx = -1.25, tz = 0.05;
-  Dg.add(roundedBox(1.05, 0.035, 0.66, 0.02, M.oak).translateX(tx).translateY(0.72).translateZ(tz));
+  const tx = X0 + 0.35, tz = 0.72;
+  Dg.add(roundedBox(0.66, 0.035, 1.05, 0.02, M.oak).translateX(tx).translateY(0.72).translateZ(tz));
   /* white legs (like the photo) */
-  [[-0.45,-0.25],[0.45,-0.25],[-0.45,0.25],[0.45,0.25]].forEach(([dx,dz])=>{
+  [[-0.25,-0.45],[-0.25,0.45],[0.25,-0.45],[0.25,0.45]].forEach(([dx,dz])=>{
     Dg.add(cyl(0.025, 0.03, 0.72, M.whiteSatin, tx+dx, 0.36, tz+dz, 14));
   });
   /* table runner + fruit bowl + two mugs */
-  Dg.add(box(0.90, 0.006, 0.26, std({color:0xc9b8a0, roughness:1.0}), tx, 0.741, tz));
+  Dg.add(box(0.26, 0.006, 0.90, std({color:0xc9b8a0, roughness:1.0}), tx, 0.741, tz));
   const bowl = new THREE.Group();
   bowl.add(cyl(0.12, 0.07, 0.065, M.ceramic, 0, 0.033, 0, 22));
   const fruits = [[0xe08a3c, -0.045, 0.01],[0xc8503c, 0.045, -0.03],[0xd8b840, 0.01, 0.05]];
@@ -1068,14 +1268,14 @@ const cat = new THREE.Group();
     bowl.add(sphere(0.038, std({ color:c, roughness:0.5 }), fx, 0.075, fz, 14));
     bowl.add(cyl(0.004,0.004,0.016, std({color:0x5a4a2a, roughness:0.9}), fx, 0.115, fz, 6));
   });
-  bowl.position.set(tx-0.18, 0.7375, tz);
+  bowl.position.set(tx+0.02, 0.7375, tz-0.32);
   Dg.add(bowl);
-  [[tx+0.16, tz-0.12],[tx+0.30, tz+0.10]].forEach(([mx,mz])=>{
+  [[tx-0.13, tz+0.16],[tx+0.13, tz+0.30]].forEach(([mx,mz])=>{
     Dg.add(cyl(0.035, 0.03, 0.085, M.ceramic, mx, 0.78, mz, 18));
     const h = new THREE.Mesh(new THREE.TorusGeometry(0.026, 0.007, 8, 14), M.ceramic);
     h.position.set(mx+0.042, 0.78, mz); Dg.add(h);
   });
-  /* two oak chairs */
+  /* two oak chairs on the room side of the table */
   function chair(x, z, ry){
     const Ch = new THREE.Group();
     Ch.add(roundedBox(0.42, 0.045, 0.42, 0.04, M.oak).translateY(0.45));
@@ -1097,8 +1297,8 @@ const cat = new THREE.Group();
     Ch.position.set(x, 0, z); Ch.rotation.y = ry;
     return Ch;
   }
-  Dg.add(chair(tx, tz-0.58, 0));            // north side, faces south
-  Dg.add(chair(tx, tz+0.58, Math.PI));      // south side, faces north
+  Dg.add(chair(tx+0.62, tz-0.27, -Math.PI/2));   // faces the table (west)
+  Dg.add(chair(tx+0.62, tz+0.27, -Math.PI/2));
   shadows(Dg); furn.add(Dg);
 
   /* pendant lamp above the table */
@@ -1113,26 +1313,26 @@ const cat = new THREE.Group();
   furn.add(P);
 }
 
-/* ---------- oak sideboard + lamp + art (south wall) ---------- */
+/* ---------- oak sideboard + lamp + art (east wall, beside the 過道) ---------- */
 {
   const S = new THREE.Group();
-  const cx = 0, cz = 0;                       // built at the origin, then placed on the west wall
-  S.add(roundedBox(1.10, 0.62, 0.38, 0.02, M.oak).translateX(cx).translateY(0.41).translateZ(cz));
-  [[-0.5,-0.13],[0.5,-0.13],[-0.5,0.13],[0.5,0.13]].forEach(([lx,lz])=>{
+  const cx = 0, cz = 0;                       // built at the origin, then placed on the east wall
+  S.add(roundedBox(0.66, 0.62, 0.38, 0.02, M.oak).translateX(cx).translateY(0.41).translateZ(cz));
+  [[-0.28,-0.13],[0.28,-0.13],[-0.28,0.13],[0.28,0.13]].forEach(([lx,lz])=>{
     S.add(cyl(0.018, 0.015, 0.10, M.walnut, cx+lx, 0.05, cz+lz, 10));
   });
   /* door / drawer faces */
-  S.add(box(0.32, 0.5, 0.02, M.oakPale, cx-0.36, 0.41, cz-0.19));
-  S.add(box(0.32, 0.22, 0.02, M.oakPale, cx+0.36, 0.52, cz-0.19));
-  S.add(box(0.32, 0.22, 0.02, M.oakPale, cx+0.36, 0.28, cz-0.19));
-  S.add(box(0.32, 0.012, 0.022, M.brass, cx-0.36, 0.60, cz-0.20));
-  S.add(box(0.32, 0.012, 0.022, M.brass, cx+0.36, 0.60, cz-0.20));
-  S.add(box(0.32, 0.012, 0.022, M.brass, cx+0.36, 0.36, cz-0.20));
+  S.add(box(0.27, 0.5, 0.02, M.oakPale, cx-0.17, 0.41, cz-0.19));
+  S.add(box(0.27, 0.22, 0.02, M.oakPale, cx+0.17, 0.52, cz-0.19));
+  S.add(box(0.27, 0.22, 0.02, M.oakPale, cx+0.17, 0.28, cz-0.19));
+  S.add(box(0.27, 0.012, 0.022, M.brass, cx-0.17, 0.60, cz-0.20));
+  S.add(box(0.27, 0.012, 0.022, M.brass, cx+0.17, 0.60, cz-0.20));
+  S.add(box(0.27, 0.012, 0.022, M.brass, cx+0.17, 0.36, cz-0.20));
   /* open middle shelf with basket + books */
-  S.add(box(0.34, 0.02, 0.34, M.oak, cx, 0.41, cz));
-  const basket = cyl(0.10, 0.085, 0.13, std({ color:0xb59a6f, roughness:1 }), cx, 0.485, cz, 18);
+  S.add(box(0.26, 0.02, 0.34, M.oak, cx, 0.41, cz));
+  const basket = cyl(0.09, 0.075, 0.13, std({ color:0xb59a6f, roughness:1 }), cx, 0.485, cz, 18);
   S.add(basket);
-  S.add(box(0.03, 0.2, 0.14, std({color:0x7d6a8a, roughness:0.85}), cx-0.13, 0.52, cz+0.02));
+  S.add(box(0.03, 0.2, 0.14, std({color:0x7d6a8a, roughness:0.85}), cx-0.10, 0.52, cz+0.02));
   /* table lamp (brass + linen) */
   const Lp = new THREE.Group();
   Lp.add(cyl(0.07, 0.09, 0.02, M.brass, 0, 0.01, 0, 18));
@@ -1140,7 +1340,7 @@ const cat = new THREE.Group();
   const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.115, 0.15, 22, 1, true), M.linen);
   shade.position.y = 0.315; Lp.add(shade);
   Lp.add(sphere(0.02, M_glowLamp, 0, 0.30, 0, 10));
-  Lp.position.set(cx+0.35, 0.72, cz);
+  Lp.position.set(cx+0.20, 0.72, cz);
   Lp.traverse(o=>{ if(o.isMesh) o.castShadow = true; });
   S.add(Lp);
   /* dried-flower vase + books */
@@ -1152,13 +1352,13 @@ const cat = new THREE.Group();
     vase.add(st);
     vase.add(sphere(0.016, std({color: i%2?0xd8b850:0xe8e0d0, roughness:0.8}), Math.cos(i*1.6)*0.02, 0.52, Math.sin(i*1.6)*0.02, 8));
   }
-  vase.position.set(cx-0.30, 0.72, cz);
+  vase.position.set(cx-0.18, 0.72, cz);
   vase.children.forEach(c=>{ c.castShadow = true; });
   S.add(vase);
-  S.add(box(0.16, 0.028, 0.12, std({color:0x8a9aa8, roughness:0.8}), cx-0.05, 0.734, cz).rotateY(0.2));
+  S.add(box(0.16, 0.028, 0.12, std({color:0x8a9aa8, roughness:0.8}), cx-0.02, 0.734, cz).rotateY(0.2));
   shadows(S);
-  S.rotation.y = -Math.PI/2;                  // front faces east, into the room
-  S.position.set(X0+0.19, 0, 0.45);
+  S.rotation.y = Math.PI/2;                   // front faces west, into the room
+  S.position.set(X1-0.19, 0, -0.01);
   furn.add(S);
 
   /* two abstract art frames above (procedural mid-century shapes) */
@@ -1173,29 +1373,29 @@ const cat = new THREE.Group();
       std({ color: 0x7a8fa8, roughness:0.85 }));
     shp2.position.set(0, 0, 0.021); F.add(shp2);
     F.add(box(w*0.5, 0.02, 0.012, std({color:0x9aa88a, roughness:0.85}), -w*0.06, -h*0.26, 0.021));
-    F.rotation.y = Math.PI/2;
+    F.rotation.y = -Math.PI/2;
     return F;
   }
-  const a1 = artFrame(0.42, 0.55, false); a1.position.set(X0+0.05, 1.62, 0.19); furn.add(a1);
-  const a2 = artFrame(0.34, 0.44, true);  a2.position.set(X0+0.05, 1.58, 0.71); furn.add(a2);
+  const a1 = artFrame(0.42, 0.55, false); a1.position.set(X1-0.05, 1.62, -0.17); furn.add(a1);
+  const a2 = artFrame(0.34, 0.44, true);  a2.position.set(X1-0.05, 1.58, 0.15); furn.add(a2);
 }
 
-/* ---------- entry corner (by the east door): hooks, tote, cap, umbrella, mat, shoes ---------- */
+/* ---------- entry corner (by the west 大門): hooks, tote, cap, umbrella, mat, shoes ---------- */
 {
   const E = new THREE.Group();
-  /* hook rail on the east wall, just south of the door */
-  E.add(box(0.02, 0.05, 0.30, M.oak, X1-0.045, 1.68, 0.0));
-  [-0.11, 0.0, 0.11].forEach(z=>{
-    E.add(cyl(0.008, 0.008, 0.06, M.brass, X1-0.075, 1.665, z, 8).rotateZ(Math.PI/2));
-    E.add(sphere(0.013, M.brass, X1-0.105, 1.665, z, 10));
+  /* hook rail on the west wall, just north of the door */
+  E.add(box(0.02, 0.05, 0.30, M.oak, X0+0.045, 1.68, -1.09));
+  [-1.20, -1.09, -0.98].forEach(z=>{
+    E.add(cyl(0.008, 0.008, 0.06, M.brass, X0+0.075, 1.665, z, 8).rotateZ(Math.PI/2));
+    E.add(sphere(0.013, M.brass, X0+0.105, 1.665, z, 10));
   });
   /* tote bag on the middle hook */
   const tote = new THREE.Group();
   tote.add(roundedBox(0.20, 0.3, 0.09, 0.03, std({color:0xe8e2d2, roughness:0.95})).translateY(-0.19));
   const strap = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.007, 8, 16, Math.PI), std({color:0xd8d0bc, roughness:0.95}));
   strap.position.y = -0.045; tote.add(strap);
-  tote.position.set(X1-0.115, 1.665, 0.0);
-  tote.rotation.y = Math.PI/2;
+  tote.position.set(X0+0.115, 1.665, -1.09);
+  tote.rotation.y = -Math.PI/2;
   tote.rotation.z = 0.06;
   E.add(tote);
   /* cap on another hook */
@@ -1204,13 +1404,13 @@ const cat = new THREE.Group();
   cap.add(dome);
   const brim = cyl(0.085, 0.085, 0.008, std({color:0x8fa08a, roughness:0.95}), 0, 0.005, 0.055, 18);
   cap.add(brim);
-  cap.position.set(X1-0.10, 1.60, -0.11);
-  cap.rotation.y = -Math.PI/2; cap.rotation.x = -0.3;
+  cap.position.set(X0+0.10, 1.60, -0.98);
+  cap.rotation.y = Math.PI/2; cap.rotation.x = -0.3;
   E.add(cap);
-  /* umbrella stand + umbrellas, tucked into the corner beside the door */
-  const stand = cyl(0.085, 0.075, 0.44, std({ color:0x6a625a, roughness:0.8 }), X1-0.22, 0.22, -1.16, 20);
+  /* umbrella stand + umbrellas, tucked beside the door */
+  const stand = cyl(0.085, 0.075, 0.44, std({ color:0x6a625a, roughness:0.8 }), X0+0.20, 0.22, 0.16, 20);
   E.add(stand);
-  E.add(cyl(0.075, 0.075, 0.01, std({color:0x3a352f, roughness:0.9}), X1-0.22, 0.435, -1.16, 20));
+  E.add(cyl(0.075, 0.075, 0.01, std({color:0x3a352f, roughness:0.9}), X0+0.20, 0.435, 0.16, 20));
   [[-0.05, 0.05, 0x2a3a5a],[0.06, -0.04, 0x8a8f94]].forEach(([ox, oz, col])=>{
     const um = new THREE.Group();
     um.add(cyl(0.007, 0.007, 0.7, M.steel, 0, 0.35, 0, 8));
@@ -1218,13 +1418,13 @@ const cat = new THREE.Group();
     tip.position.y = 0.72; um.add(tip);
     const hd = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.008, 8, 14, Math.PI), std({ color:0x4a3a2a, roughness:0.7 }));
     hd.position.y = 0.03; hd.rotation.z = Math.PI; um.add(hd);
-    um.position.set(X1-0.22+ox, 0.03, -1.16+oz);
+    um.position.set(X0+0.20+ox, 0.03, 0.16+oz);
     um.rotation.z = ox*4;
     E.add(um);
   });
   /* door mat just inside the door */
-  E.add(roundedBox(0.46, 0.014, 0.70, 0.05, std({ color:0x554f48, roughness:1 })).translateX(1.72).translateY(0.008).translateZ(-0.61));
-  E.add(roundedBox(0.34, 0.006, 0.56, 0.04, std({ color:0x6a645b, roughness:1 })).translateX(1.72).translateY(0.017).translateZ(-0.61));
+  E.add(roundedBox(0.46, 0.014, 0.70, 0.05, std({ color:0x554f48, roughness:1 })).translateX(X0+0.30).translateY(0.008).translateZ(-0.44));
+  E.add(roundedBox(0.34, 0.006, 0.56, 0.04, std({ color:0x6a645b, roughness:1 })).translateX(X0+0.30).translateY(0.017).translateZ(-0.44));
   /* pairs of shoes */
   function shoe(x, z, ry, col, s=1){
     const Sh = new THREE.Group();
@@ -1234,10 +1434,10 @@ const cat = new THREE.Group();
     Sh.position.set(x, 0.002, z); Sh.rotation.y = ry;
     return Sh;
   }
-  E.add(shoe(1.66, -0.92, 0.45, 0xe8e5e0));      /* white pair */
-  E.add(shoe(1.66, -0.78, 0.25, 0xdfe2e4));
-  E.add(shoe(1.60, -0.42, -0.35, 0xe8a8b8, 0.8)); /* child pink pair */
-  E.add(shoe(1.62, -0.29, -0.15, 0xe2aebc, 0.8));
+  E.add(shoe(X0+0.56, -0.76, 0.45, 0xe8e5e0));      /* white pair */
+  E.add(shoe(X0+0.49, -0.63, 0.25, 0xdfe2e4));
+  E.add(shoe(X0+0.50, -0.24, -0.35, 0xe8a8b8, 0.8)); /* child pink pair */
+  E.add(shoe(X0+0.43, -0.12, -0.15, 0xe2aebc, 0.8));
   shadows(E); furn.add(E);
 }
 
@@ -1256,8 +1456,20 @@ const cat = new THREE.Group();
     s.scale.set(1, rr(0.7,0.95), 1);
     P.add(s);
   }
-  P.position.set(-1.74, 0, 1.02);
+  P.position.set(-0.80, 0, 0.88);
   shadows(P); furn.add(P);
+
+  /* snake plant beside it (it used to sit on the old drawer chest) */
+  const snake = new THREE.Group();
+  snake.add(cyl(0.05, 0.042, 0.09, M.ceramic, 0, 0.045, 0, 16));
+  for(let i=0;i<7;i++){
+    const blade = new THREE.Mesh(new THREE.ConeGeometry(0.022, rr(0.30,0.46), 6), M.leafC);
+    blade.position.set(rr(-0.03,0.03), 0.26, rr(-0.03,0.03));
+    blade.rotation.z = rr(-0.16,0.16); blade.rotation.x = rr(-0.16,0.16);
+    snake.add(blade);
+  }
+  snake.position.set(-0.50, 0, 1.04);
+  shadows(snake); furn.add(snake);
 }
 
 /* ---------- teddy on the sofa ---------- */
@@ -1348,15 +1560,16 @@ function applyMix(f){
    8 · CAMERA presets + guided tour
    ===================================================================== */
 const PRESETS = {
-  entrance:{ p:V3(1.70, 1.58, -0.62), t:V3(-1.10, 0.90, 0.40) },
-  sofa    :{ p:V3(-0.95, 1.26, -0.42), t:V3(0.78, 0.55, 0.95) },
-  dining  :{ p:V3(0.12, 1.40, -0.58), t:V3(-1.58, 0.80, -0.30) },
+  entrance:{ p:V3(-1.50, 1.56, -0.26), t:V3(1.40, 0.85, 0.15) },
+  sofa    :{ p:V3(-0.70, 1.30, -0.92), t:V3(1.30, 0.60, 0.85) },
+  dining  :{ p:V3(0.30, 1.42, -0.62), t:V3(-1.80, 0.78, 0.80) },
   tv      :{ p:V3(0.05, 1.20, 0.34), t:V3(0.05, 1.26, -1.30) },
+  passage :{ p:V3(1.15, 1.74, -0.78), t:V3(4.10, 0.68, -0.82) },
   top     :{ p:V3(0.10, 2.38, 0.10), t:V3(0.00, 0.10, 0.00) },
 };
 const camAnim = { active:false, t:0, dur:1.4, fromP:new THREE.Vector3(), toP:new THREE.Vector3(), fromT:new THREE.Vector3(), toT:new THREE.Vector3() };
 let tour = { on:false, idx:0, timer:0 };
-const tourOrder = ['entrance','sofa','dining','tv','top'];
+const tourOrder = ['entrance','sofa','dining','tv','passage','top'];
 
 function flyTo(name, dur=1.4){
   const p = PRESETS[name]; if(!p) return;
@@ -1389,10 +1602,37 @@ btnSpin.addEventListener('click', ()=>{
 
 /* keyboard */
 window.addEventListener('keydown', e=>{
-  const map = { '1':'entrance', '2':'sofa', '3':'dining', '4':'tv', '5':'top' };
+  const map = { '1':'entrance', '2':'sofa', '3':'dining', '4':'tv', '5':'passage', '6':'top' };
   if(map[e.key]){ stopTour(); flyTo(map[e.key]); }
   if(e.key === 'n' || e.key === 'N') setNight(!state.night);
 });
+
+/* =====================================================================
+   8b · 趟門 / 拉門 — the two sliding elements, eased from the Door chips
+   ===================================================================== */
+const K_OPEN_X = -1.06, K_SHUT_X = -1.775;     // 廚房趟門: parked ⇄ shut
+const AC_OPEN  = 0.49,  AC_SHUT  = 0.17;       // 冷氣拉門: panels apart ⇄ met
+const slide = { kitchen:{ v:0, t:0 }, ac:{ v:0, t:0 } };
+
+const btnKitchen = document.getElementById('btnKitchen');
+const btnAcCover = document.getElementById('btnAcCover');
+btnKitchen.addEventListener('click', ()=>{
+  slide.kitchen.t = slide.kitchen.t ? 0 : 1;
+  const shut = !!slide.kitchen.t;
+  btnKitchen.classList.toggle('on', shut);
+  btnKitchen.textContent = shut ? '🚪 廚房趟門 · 關' : '🚪 廚房趟門 Kitchen slide';
+});
+btnAcCover.addEventListener('click', ()=>{
+  slide.ac.t = slide.ac.t ? 0 : 1;
+  const shut = !!slide.ac.t;
+  btnAcCover.classList.toggle('on', shut);
+  btnAcCover.textContent = shut ? '❄️ 冷氣拉門 · 關' : '❄️ 冷氣拉門 A/C cover';
+});
+function applySliders(){
+  kitchenLeaf.position.x = K_OPEN_X + (K_SHUT_X - K_OPEN_X) * slide.kitchen.v;
+  acCoverPanels.forEach((p,i)=> p.position.x = TVC + (i ? 1 : -1) * (AC_OPEN + (AC_SHUT - AC_OPEN) * slide.ac.v));
+}
+applySliders();
 
 /* =====================================================================
    9 · RESIZE + MAIN LOOP
@@ -1448,6 +1688,13 @@ function tick(){
     }
     pos.needsUpdate = true;
   }
+
+  /* sliding doors / cover easing */
+  [slide.kitchen, slide.ac].forEach(s=>{
+    s.v += (s.t - s.v) * (1 - Math.exp(-dt * 7));
+    if(Math.abs(s.t - s.v) < 0.0015) s.v = s.t;
+  });
+  applySliders();
 
   /* cat: slow breathing + tail sway */
   const b = 1 + 0.014*Math.sin(time*1.6);

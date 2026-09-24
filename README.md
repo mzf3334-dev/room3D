@@ -25,23 +25,27 @@ Internet is needed on first load — three.js r170 is pulled from the jsDelivr C
 | Drag | Orbit |
 | Wheel / pinch | Zoom |
 | Right-drag | Pan |
-| Keys `1`–`5` | Camera presets (Entrance / Sofa / Dining / TV / Top) |
+| Keys `1`–`6` | Camera presets (Entrance / Sofa / Dining / TV / Passage / Top) |
 | Key `N` | Day ⇄ Night |
 
-On-screen chips: camera presets, **🌙 Night** (cross-fades the whole light rig), **🎥 Tour** (guided camera) and **⟳ Spin**.
+On-screen chips: camera presets, **🚪 廚房趟門** and **❄️ 冷氣拉門** (slide the kitchen door shut /
+draw the A/C cover — the cover stays shut in winter), **🌙 Night** (cross-fades the whole light rig),
+**🎥 Tour** (guided camera) and **⟳ Spin**.
 
 ## What's in the room
 
-The layout follows the owner's sketch (**`images/tv_cabinet.jpg`**) and the site photos. The
-**north wall is the TV wall** and reads, left to right, exactly as drawn:
+The layout follows the owner's sketch and the site photos. The **north wall is the TV wall** and
+reads, left to right, exactly as drawn:
 
 | 廚房門 | 中空櫃 |  電視櫃 — 白色飾牆 + **冷氣窗**(窗口式冷氣) + 電視 + 長櫃  | 廁門貨架 | 廁所門 |
 | --- | --- | --- | --- | --- |
 | 0.70 m | 0.50 m | 1.95 m — **云石窗台 ≈ 2 m** | 0.40 m | 0.70 m |
 
 * **Shell** — teak strip-parquet floor (≈230 instanced planks), white walls, 6 recessed downlights.
-* **電視牆 TV wall** — light-oak 廚房門; walnut **中空櫃** (glass display over an open shoe rack);
-  raised white feature wall carrying the **55″ TV** and the **窗口式冷氣** in its 冷氣窗; the long low
+* **電視牆 TV wall** — light-oak **廚房門**, now a **趟門** on a room-side track that slides shut in
+  front of the 中空櫃; walnut **中空櫃** (glass display over an open shoe rack); raised white feature
+  wall carrying the **55″ TV** and the **窗口式冷氣** in its 冷氣窗 — with a two-panel **拉門** that
+  slides across the A/C (shut in winter) and a row of **吊櫃** hanging above it; the long low
   **電視櫃** drawn in the sketch — top slab + divided lower level, **three bays**, open, white with
   oak lipping; dark plank wall with the clock, the **廁門貨架** book shelf, and the 廁所門.
 * **Window wall (south)** — ≈ 3 m window with a **云石 window board**, security grille and sheer
@@ -49,11 +53,17 @@ The layout follows the owner's sketch (**`images/tv_cabinet.jpg`**) and the site
   **city view** whose lit windows glow at night.
 * **Living side** — cream leather sofa, ottoman with a **sleeping ginger cat** (breathing animation),
   rug and teddy bear. **No coffee table.**
-* **大柜 & 飯台** — the big pastel drawer chest stands on the sofa's **right**; the light-oak dining
-  table and chairs, pendant lamp and fruit bowl sit on its **left**, with the sideboard, lamp and
-  abstract art on the west wall.
-* **Entry / rooms** — main door on the east wall with shoes, umbrella stand and coat hooks; behind
-  the TV wall you glimpse a mini galley kitchen (hob + wok, 抽氣扇, washing machine, fridge) and a
+* **大門 & 飯台** — the main door is on the **west wall**, between the kitchen door and the dining
+  table: step in and the **飯台** (backing onto the west wall, with no cabinet beside it) is on your
+  right, the 廚房門 on your left. Pendant lamp above the table; the sideboard, lamp and abstract art
+  moved to the east wall.
+* **到頂大柜** — the floor-to-ceiling cabinet standing to the sofa's right: **趟門 sliding doors
+  below, normal hinged doors above**, hung right up to the ceiling.
+* **過道 Passage (east)** — the east wall opens at its north end into a short passage: the 廁所門
+  faces it from the north, the **主人房門 sits directly opposite** across the passage, and the
+  **客房門** is in the middle of it; both bedrooms are modelled beyond their doors.
+* **Entry corner & rooms** — shoes, umbrella stand and coat hooks beside the west door; behind the
+  TV wall you glimpse a mini galley kitchen (hob + wok, 抽氣扇, washing machine, fridge) and a
   tiled bathroom.
 
 **No ceiling fan** and no split A/C — the cooling is the window-type unit above the TV cabinet.
