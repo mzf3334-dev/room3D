@@ -25,11 +25,12 @@ Internet is needed on first load — three.js r170 is pulled from the jsDelivr C
 | Drag | Orbit |
 | Wheel / pinch | Zoom |
 | Right-drag | Pan |
-| Keys `1`–`7` | Camera presets (Entrance / Sofa / Dining / TV / Passage / Top / Ceiling) |
+| Keys `1`–`8` | Camera presets (Entrance / Sofa / Dining / TV / Passage / Top / Ceiling / Kitchen) |
 | Key `N` | Day ⇄ Night |
 
 The page opens on the **Entrance** view — as if you have just stepped in through the 大門 — and
-**天花 Ceiling** (key `7`) drops the camera low and looks up at the ceiling.
+**天花 Ceiling** (key `7`) drops the camera low and looks up at the ceiling, while **廚房 Kitchen**
+(key `8`) steps through the 廚房門 into the galley kitchen.
 
 On-screen chips: camera presets, **🚪 廚房趟門** and **❄️ 冷氣拉門** (slide the kitchen door shut /
 draw the A/C cover — the cover stays shut in winter), **🌙 Night** (cross-fades the whole light rig),
@@ -68,8 +69,10 @@ reads, left to right, exactly as drawn:
   whose storage drawers face the door, a wall fan, its own window. The passage is kept bare, with
   **no plant decorations**.
 * **Entry corner & rooms** — shoes, umbrella stand and coat hooks beside the west door; behind the
-  TV wall you glimpse a mini galley kitchen (hob + wok, 抽氣扇, washing machine, fridge) and a
-  tiled bathroom.
+  TV wall is a fitted galley kitchen — **double-zone induction hob + 抽氣機 hood**, sink with mixer
+  tap, **washing machine under the worktop**, fridge with its magnets and tea towels, rice cooker,
+  frosted **吊櫃** wall cabinets and the **廚房平台** worktop run (step in with the **廚房 Kitchen**
+  preset) — and a tiled bathroom.
 
 **No ceiling fan** and no split A/C — the cooling is the window-type unit above the TV cabinet.
 
