@@ -149,9 +149,10 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
    its back to it, facing the TV wall, and the 到頂大柜 (floor-to-ceiling cabinet:
    sliding doors below, hinged doors above) stands to the sofa's right.
 
-   The EAST wall opens (at its north end) into a short 過道: the 廁所門 faces the
-   passage from the north, the 主人房門 sits directly opposite it, and the 客房門
-   is in the middle of the passage. There is no coffee table and no ceiling fan.
+   The EAST wall opens (at its north end) into a short 過道 — plain walls, no
+   plant decorations anywhere: the 廁所門 opens off the TV wall at its entrance,
+   the 主人房門 sits on its south side, and the passage ends at the 客房門, which
+   opens into the guest room beyond. There is no coffee table and no ceiling fan.
    ===================================================================== */
 
 /* ---------- seeded pseudo-random (reproducible detail) ---------- */
@@ -185,11 +186,11 @@ const WIN_X0 = -1.50, WIN_X1 = 1.50, WIN_Y0 = 0.86, WIN_Y1 = 2.26;
 /* ---------- main door (west wall) — between the 飯台 and the 廚房門 ---------- */
 const WD0 = -0.88, WD1 = 0.00;
 
-/* ---------- 過道 (passage) beyond the east wall: 廁所門 ⇄ 主人房門 ---------- */
+/* ---------- 過道 (passage) beyond the east wall — it ends at the 客房門 ---------- */
 const PAS_Z0 = -1.30, PAS_Z1 = -0.34;         // passage band along z
-const PAS_X1 = 4.10;                          // far end of the passage
-const GD0 = 2.85, GD1 = 3.55;                 // 客房門 — middle of the passage (north side)
-const MD0 = 2.32, MD1 = 3.02;                 // 主人房門 — opposite the 廁所門 (south side)
+const PAS_X1 = 4.30;                          // far end of the passage (carries the 客房門)
+const GD0 = PAS_Z0, GD1 = PAS_Z0 + 0.70;      // 客房門 — opening in the passage's end wall
+const MD0 = 2.32, MD1 = 3.02;                 // 主人房門 — south side of the passage
 
 /* ---------- renderer / scene / camera ---------- */
 const app = document.getElementById('app');
@@ -544,7 +545,8 @@ const curtains = [];
 
 /* =====================================================================
    3 · DOORS — 廚房趟門 + 廁所門 (TV wall), the 大門 (west wall) and the two
-   bedroom doors that face each other across the 過道
+   bedroom doors: the 客房門 closes the far end of the 過道, the 主人房門 sits
+   on the passage's south side
    ===================================================================== */
 
 /* --- 廚房門 · kitchen doorway — now a 趟門 (sliding leaf on a room-side track) --- */
@@ -616,24 +618,27 @@ const kitchenLeaf = new THREE.Group();           // slid by the Open / Close chi
   shell.add(g);
 }
 
-/* --- 客房門 · guest-room door, middle of the 過道 (north side of the passage) --- */
+/* --- 客房門 · guest-room door — in the far end wall of the 過道 --- */
 {
   const g = new THREE.Group();
-  const dz = PAS_Z0 - T/2;
-  g.add(box(0.06, 2.04, T+0.03, M.walnut, GD0+0.03, 1.02, dz));
-  g.add(box(0.06, 2.04, T+0.03, M.walnut, GD1-0.03, 1.02, dz));
-  g.add(box(GD1-GD0+0.12, 0.07, T+0.03, M.walnut, (GD0+GD1)/2, 2.075, dz));
-  /* leaf, hinged on the east jamb, opened into the guest room */
+  const dx = PAS_X1 + T/2;
+  g.add(box(T+0.03, 2.04, 0.06, M.walnut, dx, 1.02, GD0+0.03));
+  g.add(box(T+0.03, 2.04, 0.06, M.walnut, dx, 1.02, GD1-0.03));
+  g.add(box(T+0.03, 0.07, GD1-GD0+0.12, M.walnut, dx, 2.075, (GD0+GD1)/2));
+  g.add(box(T+0.06, 0.022, GD1-GD0+0.06, M.oakPale, dx, 0.011, (GD0+GD1)/2));   // 門檻
+  /* leaf, hinged on the north jamb, opened right out into the 過道 — it lies
+     back along the passage's north wall, leaving the passage itself bare */
   const hinge = new THREE.Group();
-  hinge.position.set(GD1-0.03, 0, PAS_Z0-0.02);
-  hinge.rotation.y = -38*DEG;
-  hinge.add(box(0.66, 1.98, 0.045, M.whiteSatin, -0.33, 0.99, 0));
-  hinge.add(cyl(0.010, 0.010, 0.26, M.steel, -0.60, 1.00, 0.04, 10));
+  hinge.position.set(PAS_X1-0.02, 0, GD0+0.03);
+  hinge.rotation.y = -88*DEG;
+  hinge.add(box(0.045, 1.98, 0.66, M.oakPale, 0, 0.99, 0.33));
+  hinge.add(cyl(0.010, 0.010, 0.26, M.steel, 0.04, 1.00, 0.60, 10));            // 拉手
   g.add(hinge);
   scene.add(g);
 }
 
-/* --- 主人房門 · master-bedroom door — directly opposite the 廁所門 --- */
+/* --- 主人房門 · master-bedroom door — south side of the 過道, roughly across
+   from the 廁所門 --- */
 {
   const g = new THREE.Group();
   const dz = PAS_Z1 + T/2;
@@ -773,8 +778,8 @@ const kitchenLeaf = new THREE.Group();           // slid by the Open / Close chi
 }
 
 /* =====================================================================
-   5b · 過道 (passage) beyond the east wall — the 廁所門 faces it from the
-   north, the 主人房門 sits directly opposite, the 客房門 is in the middle
+   5b · 過道 (passage) beyond the east wall — a plain passage: the 主人房門
+   opens off its south side and the 客房門 closes its far end (no plant decor)
    ===================================================================== */
 {
   const P = new THREE.Group();
@@ -782,15 +787,14 @@ const kitchenLeaf = new THREE.Group();           // slid by the Open / Close chi
   const cx = (x0+x1)/2, cz = (z0+z1)/2, w = x1-x0, d = z1-z0, wallH = 2.45;
   P.add(box(w, 0.02, d, std({ color:0x9a6b3f, roughness:0.55 }), cx, FL, cz));   // wood floor
   P.add(box(w, 0.1, d, M.ceil, cx, wallH, cz));                                  // ceiling
-  /* north side — carries the 客房門 */
-  [[x0-0.1, GD0], [GD1, x1+0.1]].forEach(([a,b])=> P.add(box(b-a, wallH, 0.1, M.paint, (a+b)/2, wallH/2, z0-0.05)));
-  P.add(box(GD1-GD0, wallH-2.04, 0.1, M.paint, (GD0+GD1)/2, (wallH+2.04)/2, z0-0.05));
-  /* south side — carries the 主人房門, straight across from the 廁所門 */
+  /* north side — solid: the 廁所門 is around the corner, on the TV wall */
+  P.add(box(x1-x0+0.2, wallH, 0.1, M.paint, cx, wallH/2, z0-0.05));
+  /* south side — carries the 主人房門, roughly across from the 廁所門 */
   [[x0-0.1, MD0], [MD1, x1+0.1]].forEach(([a,b])=> P.add(box(b-a, wallH, 0.1, M.paint, (a+b)/2, wallH/2, z1+0.05)));
   P.add(box(MD1-MD0, wallH-2.04, 0.1, M.paint, (MD0+MD1)/2, (wallH+2.04)/2, z1+0.05));
-  /* far end of the passage */
-  P.add(box(0.1, wallH, d+0.2, M.paint, x1+0.05, wallH/2, cz));
-  P.add(box(0.5, 0.02, 0.26, std({ color:0x6f7d8a, roughness:1 }), x1-0.3, FL+0.012, cz));   // runner
+  /* far end — the 客房門 opens through this wall (GD0..GD1) */
+  P.add(box(0.1, wallH, z1-GD1, M.paint, x1+0.05, wallH/2, (GD1+z1)/2));
+  P.add(box(0.1, wallH-2.04, GD1-GD0+0.12, M.paint, x1+0.05, (wallH+2.04)/2, (GD0+GD1)/2));
   /* passage downlights */
   [-0.22, 0.22].forEach(dz=>{
     P.add(cyl(0.05, 0.05, 0.014, M.skirt, cx-0.3, wallH-0.007, cz+dz, 18));
@@ -801,32 +805,63 @@ const kitchenLeaf = new THREE.Group();           // slid by the Open / Close chi
   shadows(P); scene.add(P);
 }
 
-/* --- 客房 guest room (beyond the 客房門) --- */
+/* --- 客房 guest room (through the 客房門, straight on at the end of the 過道) --- */
 {
   const B = new THREE.Group();
-  const x0 = 2.55, x1 = 4.30, z0 = -3.55, z1 = PAS_Z0 - T;      // interior
+  const x0 = 4.40, x1 = 6.50, z0 = -1.85, z1 = 0.20;            // interior
   const cx = (x0+x1)/2, cz = (z0+z1)/2, w = x1-x0, d = z1-z0;
   B.add(box(w, 0.02, d, std({ color:0xb08a5a, roughness:0.6 }), cx, FL, cz));
   B.add(box(w, 0.1, d, M.ceil, cx, 2.35, cz));
   B.add(box(w+0.2, 2.4, 0.1, M.paint, cx, 1.2, z0-0.05));                     // far (north) wall
-  B.add(box(0.1, 2.4, d+0.2, M.paint, x0-0.05, 1.2, cz));
-  B.add(box(0.1, 2.4, d+0.2, M.paint, x1+0.05, 1.2, cz));
-  /* window + daylight on the far wall */
-  B.add(box(1.0, 1.15, 0.05, M.alu, cx, 1.55, z0+0.03));
-  B.add(box(0.94, 1.09, 0.02, M.glass, cx, 1.55, z0+0.05));
-  B.add(box(1.10, 1.25, 0.02, emissiveMat(0xdfe9f2, 0.9, 0.10), cx, 1.55, z0-0.04));
-  /* single bed (platform + mattress + duvet + pillow) */
-  B.add(box(0.95, 0.30, 1.90, M.whiteSatin, 3.72, 0.16, -2.50));
-  B.add(box(0.92, 0.14, 1.84, M.white, 3.72, 0.38, -2.50));
-  B.add(box(0.92, 0.06, 1.20, std({ color:0x8fa8c8, roughness:0.95 }), 3.72, 0.46, -2.22));
-  B.add(roundedBox(0.52, 0.10, 0.30, 0.04, M.cushionCrm).translateX(3.72).translateY(0.50).translateZ(-3.10));
-  B.add(box(0.98, 0.55, 0.05, M.oak, 3.72, 0.28, -3.47));                     // headboard
-  /* wardrobe + rug + ceiling lamp */
-  B.add(box(0.60, 2.20, 0.80, M.whiteSatin, 2.90, 1.10, -3.05));
-  B.add(box(0.03, 1.80, 0.03, M.steelDark, 2.63, 1.05, -2.88));
-  B.add(box(0.03, 1.80, 0.03, M.steelDark, 2.63, 1.05, -3.22));
-  B.add(box(0.90, 0.012, 0.60, std({ color:0xc8bfa8, roughness:1 }), 3.60, FL+0.006, -2.10));
-  B.add(cyl(0.09, 0.09, 0.03, M_glowWarm, 3.55, 2.32, -2.40, 22));
+  B.add(box(w+0.2, 2.4, 0.1, M.paint, cx, 1.2, z1+0.05));                     // south wall
+  /* west side — the 過道's end wall (with the 客房門) fills the middle; this
+     stub closes the rest, the master bedroom's east wall covers the south end */
+  B.add(box(0.1, 2.4, (PAS_Z0-0.10)-z0, M.paint, 4.35, 1.2, (z0+(PAS_Z0-0.10))/2));
+  /* east wall — window + daylight on the far side */
+  B.add(box(0.1, 2.4, 1.20, M.paint, x1+0.05, 1.2, -1.35));
+  B.add(box(0.1, 2.4, 0.15, M.paint, x1+0.05, 1.2, 0.225));
+  B.add(box(0.1, 0.90, 0.90, M.paint, x1+0.05, 0.45, -0.30));
+  B.add(box(0.1, 0.45, 0.90, M.paint, x1+0.05, 2.175, -0.30));
+  B.add(box(0.05, 1.05, 0.95, M.alu, x1-0.02, 1.425, -0.30));
+  B.add(box(0.02, 0.99, 0.89, M.glass, x1, 1.425, -0.30));
+  B.add(box(0.02, 1.15, 1.05, emissiveMat(0xdfe9f2, 0.9, 0.10), x1+0.11, 1.425, -0.30));
+  B.add(box(0.20, 0.03, 0.98, M.whiteSatin, x1-0.08, 0.905, -0.30));          // 窗台 board
+  /* single platform bed along the east wall — its drawers face the door */
+  B.add(box(0.93, 0.30, 1.80, M.whiteSatin, 6.015, 0.16, -0.88));
+  B.add(box(0.90, 0.14, 1.74, M.white, 6.015, 0.38, -0.88));
+  B.add(box(0.90, 0.06, 1.17, std({ color:0xf2b9c6, roughness:0.95 }), 6.015, 0.46, -0.565));  // pink check duvet
+  [ -0.95, -0.60, -0.25 ].forEach(z=> B.add(box(0.90, 0.006, 0.022, M.white, 6.015, 0.493, z)));
+  [ 5.72, 6.31 ].forEach(x=> B.add(box(0.022, 0.006, 1.17, M.white, x, 0.493, -0.565)));
+  B.add(roundedBox(0.52, 0.10, 0.30, 0.04, M.cushionCrm).translateX(6.015).translateY(0.50).translateZ(-1.62));
+  B.add(box(0.98, 0.55, 0.05, M.whiteSatin, 6.015, 0.28, -1.83));            // headboard
+  [0,1,2].forEach(i=> B.add(box(0.03, 0.22, 0.50, M.white, 5.535, 0.15, -1.47 + i*0.59)));   // drawers
+  /* wall fan above the bed */
+  const fan = new THREE.Group();
+  fan.add(box(0.05, 0.16, 0.16, M.white, 0.025, 0, 0));
+  const fring = new THREE.Mesh(new THREE.TorusGeometry(0.155, 0.012, 8, 26), M.white);
+  fring.rotation.y = Math.PI/2; fan.add(fring);
+  for(let i=0;i<4;i++){
+    const bg = new THREE.Group();
+    bg.add(box(0.012, 0.13, 0.045, std({ color:0xf6f4f0, roughness:0.55 }), 0.012, 0, 0.075));
+    bg.rotation.x = i*Math.PI/2; fan.add(bg);
+  }
+  const fcap = cyl(0.034, 0.034, 0.03, std({ color:0xe8c84a, roughness:0.5 }), 0.02, 0, 0, 16);
+  fcap.rotation.z = Math.PI/2; fan.add(fcap);
+  fan.position.set(6.47, 1.52, -1.10);
+  fan.traverse(o=>{ if(o.isMesh){ o.castShadow = true; } });
+  B.add(fan);
+  /* shelf + mirror over the bed head */
+  B.add(box(0.16, 0.03, 0.45, M.white, 6.42, 1.30, -1.55));
+  B.add(box(0.015, 0.40, 0.42, M.mirror, 6.485, 1.56, -1.55));
+  /* wardrobe (with a basket + boxes on top), a hanging jacket, ceiling lamp */
+  B.add(box(0.55, 2.10, 0.50, M.whiteSatin, 4.725, 1.05, -0.05));
+  B.add(box(0.03, 1.60, 0.03, M.steelDark, 4.55, 1.05, -0.315));
+  B.add(box(0.03, 1.60, 0.03, M.steelDark, 4.90, 1.05, -0.315));
+  B.add(box(0.30, 0.18, 0.35, M.white, 4.62, 2.19, -0.05));
+  B.add(cyl(0.10, 0.09, 0.14, std({ color:0xb59a6f, roughness:1 }), 4.88, 2.17, -0.05, 18));
+  B.add(box(0.28, 0.44, 0.05, std({ color:0xe8622a, roughness:0.9 }), 5.40, 1.42, 0.17));    // hanging jacket
+  B.add(cyl(0.008, 0.008, 0.06, M.steel, 5.40, 1.70, 0.19, 8));
+  B.add(cyl(0.09, 0.09, 0.03, M_glowWarm, cx, 2.32, cz, 22));
   shadows(B); scene.add(B);
 }
 
@@ -1564,7 +1599,7 @@ const PRESETS = {
   sofa    :{ p:V3(-0.70, 1.30, -0.92), t:V3(1.30, 0.60, 0.85) },
   dining  :{ p:V3(0.30, 1.42, -0.62), t:V3(-1.80, 0.78, 0.80) },
   tv      :{ p:V3(0.05, 1.20, 0.34), t:V3(0.05, 1.26, -1.30) },
-  passage :{ p:V3(1.15, 1.74, -0.78), t:V3(4.10, 0.68, -0.82) },
+  passage :{ p:V3(1.15, 1.60, -0.78), t:V3(4.35, 0.98, -0.95) },
   top     :{ p:V3(0.10, 2.38, 0.10), t:V3(0.00, 0.10, 0.00) },
 };
 const camAnim = { active:false, t:0, dur:1.4, fromP:new THREE.Vector3(), toP:new THREE.Vector3(), fromT:new THREE.Vector3(), toT:new THREE.Vector3() };

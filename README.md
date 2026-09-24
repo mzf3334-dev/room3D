@@ -60,8 +60,10 @@ reads, left to right, exactly as drawn:
 * **到頂大柜** — the floor-to-ceiling cabinet standing to the sofa's right: **趟門 sliding doors
   below, normal hinged doors above**, hung right up to the ceiling.
 * **過道 Passage (east)** — the east wall opens at its north end into a short passage: the 廁所門
-  faces it from the north, the **主人房門 sits directly opposite** across the passage, and the
-  **客房門** is in the middle of it; both bedrooms are modelled beyond their doors.
+  opens off the TV wall just around the corner, the **主人房門** sits on the passage's south side,
+  and the passage **ends at the 客房門**, which opens into the guest room beyond — a platform bed
+  whose storage drawers face the door, a wall fan, its own window. The passage is kept bare, with
+  **no plant decorations**.
 * **Entry corner & rooms** — shoes, umbrella stand and coat hooks beside the west door; behind the
   TV wall you glimpse a mini galley kitchen (hob + wok, 抽氣扇, washing machine, fridge) and a
   tiled bathroom.
