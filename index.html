@@ -87,7 +87,7 @@
 
 <div id="hint" class="card">
   <b>拖曳</b> 旋轉 · <b>滾輪</b> 縮放 · <b>右鍵</b> 平移<br/>
-  鍵盤 <b>1–9</b> 視角 · <b>N</b> 日夜
+  鍵盤 <b>1–9</b> 視角（<b>9</b> 客房多角度）· <b>N</b> 日夜
 </div>
 
 <div id="panel" class="card">
@@ -101,7 +101,7 @@
     <button class="chip" data-view="top">俯覽 Top</button>
     <button class="chip" data-view="ceiling">天花 Ceiling</button>
     <button class="chip" data-view="kitchen">廚房 Kitchen</button>
-    <button class="chip" data-view="guestroom">客房 Guest Room</button>
+    <button class="chip" data-view="guestroom1">客房 Guest Room · 門口</button>
   </div>
   <div class="row">
     <span class="lab">Doors</span>
@@ -1692,9 +1692,19 @@ const PRESETS = {
   passage :{ p:V3(1.15, 1.60, -0.78), t:V3(4.35, 0.98, -0.95) },
   ceiling :{ p:V3(0.30, 0.50, 0.10), t:V3(-0.35, 2.55, -0.45) },    // low, looking up at the 天花板
   kitchen :{ p:V3(-1.95, 1.68, -1.46), t:V3(-1.90, 1.15, -2.60) },  // stepped into the galley kitchen
-  guestroom:{ p:V3(4.55, 1.42, -0.70), t:V3(6.15, 1.30, -0.75) }, // stepped into the 客房
+  /* 客房 is a tiny room, so one shot cannot show it all: four angles that the
+     chip (and key 9) step through — 門口 ➜ 全景 ➜ 上下床 ➜ 書檯窗台 */
+  guestroom1:{ p:V3(4.56, 1.45, -0.52), t:V3(6.05, 1.20, -0.88), fov:80 },  // 門口 — bed, window, desk
+  guestroom2:{ p:V3(5.08, 1.34,  0.10), t:V3(5.95, 1.20, -1.32), fov:92 },  // 全景 — the whole loft
+  guestroom3:{ p:V3(5.40, 1.20,  0.12), t:V3(5.45, 1.15, -1.60), fov:88 },  // 上下床 — bed over storage
+  guestroom4:{ p:V3(5.10, 1.12, -0.62), t:V3(6.42, 0.98, -0.42), fov:76 },  // 書檯窗台 — desk + 雲石窗台
   top     :{ p:V3(0.10, 2.38, 0.10), t:V3(0.00, 0.10, 0.00) },
 };
+/* a view id may carry a trailing digit when several angles share one chip */
+const viewKey = n => String(n).replace(/\d+$/,'');
+const GUEST_ANGLES = ['guestroom1','guestroom2','guestroom3','guestroom4'];
+const GUEST_TAGS = { guestroom1:'門口', guestroom2:'全景', guestroom3:'上下床', guestroom4:'書檯窗台' };
+let currentView = 'entrance';
 /* the page opens on the 入口 view: stand the camera at the preset straight away
    (its old raw default sat inside the 到頂大柜 — nothing but white on screen) */
 camera.position.copy(PRESETS.entrance.p);
@@ -1711,13 +1721,14 @@ const POLAR_DEFAULT = 1.545, POLAR_CEILING = 2.80;
 /* the 廚房 / 客房 views step into tight rooms, so they get a wider lens and
    their own camera fences; both are handed back when a flight lands */
 const FOV_DEFAULT = 58, FOV_SMALL = 72;
-const smallRoom = name => (name === 'kitchen' || name === 'guestroom');
+const smallRoom = name => (viewKey(name) === 'kitchen' || viewKey(name) === 'guestroom');
 /* the camera is fenced into the room it is showing (no wall clipping): the 廚房
    view moves the fence into the galley kitchen instead */
 const BOUNDS_ROOM    = { x:[X0+0.14, X1-0.14], y:[0.30, H-0.18], z:[Z0+0.14, Z1-0.14] };
 const BOUNDS_KITCHEN = { x:[-2.50, -1.00], y:[0.35, 2.30], z:[-2.86, -1.44] };
 const BOUNDS_GUEST   = { x:[4.46, 6.44], y:[0.35, 2.30], z:[-1.79, 0.14] };
-const boundsOf = name => name === 'kitchen' ? BOUNDS_KITCHEN : (name === 'guestroom' ? BOUNDS_GUEST : BOUNDS_ROOM);
+const boundsOf = name => viewKey(name) === 'kitchen' ? BOUNDS_KITCHEN
+                        : (viewKey(name) === 'guestroom' ? BOUNDS_GUEST : BOUNDS_ROOM);
 const unionBounds = (a,b)=>({ x:[Math.min(a.x[0],b.x[0]), Math.max(a.x[1],b.x[1])],
                               y:[Math.min(a.y[0],b.y[0]), Math.max(a.y[1],b.y[1])],
                               z:[Math.min(a.z[0],b.z[0]), Math.max(a.z[1],b.z[1])] });
@@ -1729,14 +1740,29 @@ function flyTo(name, dur=1.4){
   camAnim.bounds = boundsOf(name);                     // applied when the flight lands
   camBounds = unionBounds(camBounds, camAnim.bounds);  // …the fence opens up meanwhile
   camAnim.fromFov = camera.fov;                        // …and the lens eases over too
-  camAnim.toFov = smallRoom(name) ? FOV_SMALL : FOV_DEFAULT;
+  camAnim.toFov = p.fov || (smallRoom(name) ? FOV_SMALL : FOV_DEFAULT);
   camAnim.fromP.copy(camera.position); camAnim.toP.copy(p.p);
   camAnim.fromT.copy(controls.target); camAnim.toT.copy(p.t);
   camAnim.t = 0; camAnim.dur = dur; camAnim.active = true;
-  document.querySelectorAll('[data-view]').forEach(b=> b.classList.toggle('on', b.dataset.view === name));
+  currentView = name;
+  const key = viewKey(name);
+  document.querySelectorAll('[data-view]').forEach(b=> b.classList.toggle('on', viewKey(b.dataset.view) === key));
+}
+/* the 客房 chip steps through its angles instead of jumping to one view */
+const chipGuest = document.querySelector('[data-view="guestroom1"]');
+function showGuestAngle(i){
+  const id = GUEST_ANGLES[i];
+  chipGuest.textContent = '客房 Guest Room · ' + GUEST_TAGS[id];
+  flyTo(id);
+}
+function cycleGuestRoom(){
+  const i = GUEST_ANGLES.indexOf(currentView);
+  showGuestAngle((i < 0 ? 0 : i + 1) % GUEST_ANGLES.length);
 }
 document.querySelectorAll('[data-view]').forEach(b=> b.addEventListener('click', ()=>{
-  stopTour(); flyTo(b.dataset.view);
+  stopTour();
+  if(viewKey(b.dataset.view) === 'guestroom') cycleGuestRoom();
+  else flyTo(b.dataset.view);
 }));
 controls.addEventListener('start', ()=>{ stopTour(); });
 
@@ -1759,8 +1785,9 @@ btnSpin.addEventListener('click', ()=>{
 
 /* keyboard */
 window.addEventListener('keydown', e=>{
-  const map = { '1':'entrance', '2':'sofa', '3':'dining', '4':'tv', '5':'passage', '6':'top', '7':'ceiling', '8':'kitchen', '9':'guestroom' };
+  const map = { '1':'entrance', '2':'sofa', '3':'dining', '4':'tv', '5':'passage', '6':'top', '7':'ceiling', '8':'kitchen' };
   if(map[e.key]){ stopTour(); flyTo(map[e.key]); }
+  if(e.key === '9'){ stopTour(); cycleGuestRoom(); }
   if(e.key === 'n' || e.key === 'N') setNight(!state.night);
 });
 
@@ -1905,9 +1932,10 @@ window.__room = {
   snapTo(name){
     const p = PRESETS[name]; if(!p) return;
     camAnim.active = false;
+    currentView = name;
     controls.maxPolarAngle = (name === 'ceiling') ? POLAR_CEILING : POLAR_DEFAULT;
     camBounds = boundsOf(name);
-    camera.fov = smallRoom(name) ? FOV_SMALL : FOV_DEFAULT;
+    camera.fov = p.fov || (smallRoom(name) ? FOV_SMALL : FOV_DEFAULT);
     camera.updateProjectionMatrix();
     camera.position.copy(p.p); controls.target.copy(p.t);
     controls.update(); renderer.render(scene, camera);
