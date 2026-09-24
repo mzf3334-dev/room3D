@@ -25,12 +25,13 @@ Internet is needed on first load — three.js r170 is pulled from the jsDelivr C
 | Drag | Orbit |
 | Wheel / pinch | Zoom |
 | Right-drag | Pan |
-| Keys `1`–`8` | Camera presets (Entrance / Sofa / Dining / TV / Passage / Top / Ceiling / Kitchen) |
+| Keys `1`–`9` | Camera presets (Entrance / Sofa / Dining / TV / Passage / Top / Ceiling / Kitchen / Guest Room) |
 | Key `N` | Day ⇄ Night |
 
 The page opens on the **Entrance** view — as if you have just stepped in through the 大門 — and
 **天花 Ceiling** (key `7`) drops the camera low and looks up at the ceiling, while **廚房 Kitchen**
-(key `8`) steps through the 廚房門 into the galley kitchen.
+(key `8`) steps through the 廚房門 into the galley kitchen and **客房 Guest Room** (key `9`) steps
+through the 客房門 at the end of the passage.
 
 On-screen chips: camera presets, **🚪 廚房趟門** and **❄️ 冷氣拉門** (slide the kitchen door shut /
 draw the A/C cover — the cover stays shut in winter), **🌙 Night** (cross-fades the whole light rig),
@@ -68,6 +69,10 @@ reads, left to right, exactly as drawn:
   and the passage **ends at the 客房門**, which opens into the guest room beyond — a platform bed
   whose storage drawers face the door, a wall fan, its own window. The passage is kept bare, with
   **no plant decorations**.
+* **客房 Guest room (key `9`)** — through the door at the end of the passage: a wooden loft — the
+  **bed over a storage cabinet** — with a **window-type A/C** up on the wall above it, and a desk
+  beside the cabinet, tucked under the **雲石窗台** (marble window board) that runs along the desk's
+  left. The desk chair, wardrobe and the wall's hanging jacket finish the room.
 * **Entry corner & rooms** — shoes, umbrella stand and coat hooks beside the west door; behind the
   TV wall is a fitted galley kitchen — **double-zone induction hob + 抽氣機 hood**, sink with mixer
   tap, **washing machine under the worktop**, fridge with its magnets and tea towels, rice cooker,

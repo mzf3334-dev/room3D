@@ -87,7 +87,7 @@
 
 <div id="hint" class="card">
   <b>拖曳</b> 旋轉 · <b>滾輪</b> 縮放 · <b>右鍵</b> 平移<br/>
-  鍵盤 <b>1–8</b> 視角 · <b>N</b> 日夜
+  鍵盤 <b>1–9</b> 視角 · <b>N</b> 日夜
 </div>
 
 <div id="panel" class="card">
@@ -101,6 +101,7 @@
     <button class="chip" data-view="top">俯覽 Top</button>
     <button class="chip" data-view="ceiling">天花 Ceiling</button>
     <button class="chip" data-view="kitchen">廚房 Kitchen</button>
+    <button class="chip" data-view="guestroom">客房 Guest Room</button>
   </div>
   <div class="row">
     <span class="lab">Doors</span>
@@ -870,7 +871,9 @@ const kitchenLeaf = new THREE.Group();           // slid by the Open / Close chi
   shadows(P); scene.add(P);
 }
 
-/* --- 客房 guest room (through the 客房門, straight on at the end of the 過道) --- */
+/* --- 客房 guest room (through the 客房門, at the end of the 過道) — a wooden
+   loft: bed over a storage cabinet, window-type A/C up on the wall above it,
+   and a desk beside the cabinet with the 雲石窗台 running along its left --- */
 {
   const B = new THREE.Group();
   const x0 = 4.40, x1 = 6.50, z0 = -1.85, z1 = 0.20;            // interior
@@ -882,42 +885,64 @@ const kitchenLeaf = new THREE.Group();           // slid by the Open / Close chi
   /* west side — the 過道's end wall (with the 客房門) fills the middle; this
      stub closes the rest, the master bedroom's east wall covers the south end */
   B.add(box(0.1, 2.4, (PAS_Z0-0.10)-z0, M.paint, 4.35, 1.2, (z0+(PAS_Z0-0.10))/2));
-  /* east wall — window + daylight on the far side */
-  B.add(box(0.1, 2.4, 1.20, M.paint, x1+0.05, 1.2, -1.35));
-  B.add(box(0.1, 2.4, 0.15, M.paint, x1+0.05, 1.2, 0.225));
-  B.add(box(0.1, 0.90, 0.90, M.paint, x1+0.05, 0.45, -0.30));
-  B.add(box(0.1, 0.45, 0.90, M.paint, x1+0.05, 2.175, -0.30));
-  B.add(box(0.05, 1.05, 0.95, M.alu, x1-0.02, 1.425, -0.30));
-  B.add(box(0.02, 0.99, 0.89, M.glass, x1, 1.425, -0.30));
-  B.add(box(0.02, 1.15, 1.05, emissiveMat(0xdfe9f2, 0.9, 0.10), x1+0.11, 1.425, -0.30));
-  B.add(box(0.20, 0.03, 0.98, M.whiteSatin, x1-0.08, 0.905, -0.30));          // 窗台 board
-  /* single platform bed along the east wall — its drawers face the door */
-  B.add(box(0.93, 0.30, 1.80, M.whiteSatin, 6.015, 0.16, -0.88));
-  B.add(box(0.90, 0.14, 1.74, M.white, 6.015, 0.38, -0.88));
-  B.add(box(0.90, 0.06, 1.17, std({ color:0xf2b9c6, roughness:0.95 }), 6.015, 0.46, -0.565));  // pink check duvet
-  [ -0.95, -0.60, -0.25 ].forEach(z=> B.add(box(0.90, 0.006, 0.022, M.white, 6.015, 0.493, z)));
-  [ 5.72, 6.31 ].forEach(x=> B.add(box(0.022, 0.006, 1.17, M.white, x, 0.493, -0.565)));
-  B.add(roundedBox(0.52, 0.10, 0.30, 0.04, M.cushionCrm).translateX(6.015).translateY(0.50).translateZ(-1.62));
-  B.add(box(0.98, 0.55, 0.05, M.whiteSatin, 6.015, 0.28, -1.83));            // headboard
-  [0,1,2].forEach(i=> B.add(box(0.03, 0.22, 0.50, M.white, 5.535, 0.15, -1.47 + i*0.59)));   // drawers
-  /* wall fan above the bed */
-  const fan = new THREE.Group();
-  fan.add(box(0.05, 0.16, 0.16, M.white, 0.025, 0, 0));
-  const fring = new THREE.Mesh(new THREE.TorusGeometry(0.155, 0.012, 8, 26), M.white);
-  fring.rotation.y = Math.PI/2; fan.add(fring);
-  for(let i=0;i<4;i++){
-    const bg = new THREE.Group();
-    bg.add(box(0.012, 0.13, 0.045, std({ color:0xf6f4f0, roughness:0.55 }), 0.012, 0, 0.075));
-    bg.rotation.x = i*Math.PI/2; fan.add(bg);
-  }
-  const fcap = cyl(0.034, 0.034, 0.03, std({ color:0xe8c84a, roughness:0.5 }), 0.02, 0, 0, 16);
-  fcap.rotation.z = Math.PI/2; fan.add(fcap);
-  fan.position.set(6.47, 1.52, -1.10);
-  fan.traverse(o=>{ if(o.isMesh){ o.castShadow = true; } });
-  B.add(fan);
-  /* shelf + mirror over the bed head */
-  B.add(box(0.16, 0.03, 0.45, M.white, 6.42, 1.30, -1.55));
-  B.add(box(0.015, 0.40, 0.42, M.mirror, 6.485, 1.56, -1.55));
+  /* east wall — the window: glass over the 雲石窗台, the A/C band above it */
+  B.add(box(0.1, 2.4, 0.45, M.paint, x1+0.05, 1.2, -1.725));                 // north of the window
+  B.add(box(0.1, 2.4, 0.20, M.paint, x1+0.05, 1.2, 0.20));                    // south of the window
+  B.add(box(0.1, 0.90, 1.60, M.paint, x1+0.05, 0.45, -0.70));                 // under the window
+  B.add(box(0.1, 0.12, 1.60, M.paint, x1+0.05, 2.34, -0.70));                 // over the A/C band
+  B.add(box(0.20, MARBLE, 1.64, M.marble, x1-0.10, 0.90-MARBLE/2, -0.70));    // 雲石窗台
+  B.add(box(0.03, 0.05, 1.64, M.marble, x1-0.185, 0.875, -0.70));             // 滴水線
+  /* window frame — four bars + a mullion, glass behind, daylight outside */
+  B.add(box(0.06, 0.05, 1.64, M.alu, x1-0.03, 1.855, -0.70));                 // head
+  B.add(box(0.06, 0.05, 1.64, M.alu, x1-0.03, 0.925, -0.70));                 // sill rail
+  B.add(box(0.06, 0.98, 0.05, M.alu, x1-0.03, 1.39, -1.475));                 // jambs
+  B.add(box(0.06, 0.98, 0.05, M.alu, x1-0.03, 1.39, 0.075));
+  B.add(box(0.05, 0.90, 0.04, M.alu, x1-0.03, 1.39, -0.70));                  // mullion
+  B.add(box(0.015, 0.90, 1.55, M.glass, x1, 1.39, -0.70));
+  B.add(box(0.02, 1.10, 1.70, emissiveMat(0xdfe9f2, 0.9, 0.10), x1+0.095, 1.39, -0.70));
+  /* 窗口式冷氣機 — up high on the wall, above the bed */
+  const ac = new THREE.Group();
+  const AH = 0.40, AW = 0.66;
+  ac.add(box(0.34, AH, AW, M.acShell, -0.03, 0.215, 0));                      // 機身
+  ac.add(box(0.02, AH-0.07, AW-0.05, std({ color:0x6c7176, roughness:0.8 }), -0.108, 0.215, 0));
+  for(let i=-2;i<=2;i++) ac.add(box(0.016, 0.021, AW-0.12, M.acGrille, -0.140, 0.215+i*0.053, 0));
+  ac.add(box(0.022, 0.055, AW-0.06, M.white, -0.135, 0.052, 0));              // 控制面板
+  ac.add(sphere(0.007, emissiveMat(0x33ee77, 0.8, 1.1), -0.148, 0.052, 0.235));
+  ac.add(box(0.006, 0.012, 0.05, M.matteGray, -0.152, 0.052, -0.20));         // 牌子
+  [-1, 1].forEach(s => ac.add(box(0.035, AH-0.015, 0.05, M.wallPanel, -0.03, 0.215, s*0.355)));
+  ac.position.set(x1+0.055, 1.88, -1.10);
+  shadows(ac); B.add(ac);
+  B.add(box(0.035, AH, 0.82, M.wallPanel, x1+0.055, 2.08, -0.31));            // infill south of the A/C
+  /* 木的上下[床] — storage cabinet below, bed above (head at the west end) */
+  B.add(box(1.74, 0.72, 0.91, M.oak, 5.39, 0.36, -1.375));                    // 儲物櫃
+  [4.80, 5.39, 5.98].forEach(x=>{
+    B.add(box(0.54, 0.58, 0.02, M.oakPale, x, 0.37, -0.915));
+    B.add(box(0.20, 0.022, 0.012, M.steelDark, x, 0.60, -0.925));
+  });
+  B.add(box(1.78, 0.06, 0.95, M.oak, 5.39, 0.75, -1.375));                    // bed platform
+  B.add(box(1.72, 0.12, 0.88, M.white, 5.39, 0.84, -1.375));                  // mattress
+  B.add(box(1.70, 0.06, 0.44, std({ color:0xf2b9c6, roughness:0.95 }), 5.39, 0.93, -1.135));   // duvet
+  [ -1.22, -1.05 ].forEach(z=> B.add(box(1.70, 0.006, 0.022, M.white, 5.39, 0.963, z)));
+  [ 5.05, 5.72 ].forEach(x=> B.add(box(0.022, 0.006, 0.44, M.white, x, 0.963, -1.135)));
+  B.add(roundedBox(0.52, 0.10, 0.30, 0.04, M.cushionCrm).translateX(4.88).translateY(0.95).translateZ(-1.375));
+  [[4.54,-1.80],[6.24,-1.80],[4.54,-0.94],[6.24,-0.94]].forEach(([px,pz])=>
+    B.add(box(0.06, 1.32, 0.06, M.oak, px, 0.66, pz)));                       // corner posts
+  B.add(box(1.70, 0.05, 0.04, M.oak, 5.39, 1.24, -0.925));                    // guard rail
+  [4.62, 5.39, 6.16].forEach(x=> B.add(box(0.05, 0.46, 0.04, M.oak, x, 1.00, -0.925)));
+  /* 書台 desk against the east wall, tucked under the 雲石窗台 */
+  B.add(box(0.55, 0.035, 0.90, M.oak, 6.22, 0.74, -0.30));
+  [[5.99,-0.71],[5.99,0.11],[6.45,-0.71],[6.45,0.11]].forEach(([lx,lz])=>
+    B.add(cyl(0.022, 0.022, 0.74, M.oak, lx, 0.37, lz, 12)));
+  B.add(box(0.40, 0.16, 0.46, M.oakPale, 6.29, 0.60, -0.30));                 // desk drawer
+  B.add(box(0.014, 0.018, 0.22, M.steelDark, 6.085, 0.655, -0.30));
+  /* desk chair (oak, facing the window) */
+  const ch = new THREE.Group();
+  ch.add(roundedBox(0.40, 0.045, 0.40, 0.04, M.oak).translateY(0.44));
+  [[-0.16,-0.16],[0.16,-0.16],[-0.16,0.16],[0.16,0.16]].forEach(([lx,lz])=>
+    ch.add(cyl(0.016, 0.013, 0.44, M.oak, lx, 0.22, lz, 10)));
+  ch.add(box(0.03, 0.30, 0.40, M.oakPale, -0.185, 0.60, 0));                  // back at the west
+  ch.position.set(5.72, 0, -0.30);
+  shadows(ch); B.add(ch);
   /* wardrobe (with a basket + boxes on top), a hanging jacket, ceiling lamp */
   B.add(box(0.55, 2.10, 0.50, M.whiteSatin, 4.725, 1.05, -0.05));
   B.add(box(0.03, 1.60, 0.03, M.steelDark, 4.55, 1.05, -0.315));
@@ -1667,6 +1692,7 @@ const PRESETS = {
   passage :{ p:V3(1.15, 1.60, -0.78), t:V3(4.35, 0.98, -0.95) },
   ceiling :{ p:V3(0.30, 0.50, 0.10), t:V3(-0.35, 2.55, -0.45) },    // low, looking up at the 天花板
   kitchen :{ p:V3(-1.95, 1.68, -1.46), t:V3(-1.90, 1.15, -2.60) },  // stepped into the galley kitchen
+  guestroom:{ p:V3(4.55, 1.42, -0.70), t:V3(6.15, 1.30, -0.75) }, // stepped into the 客房
   top     :{ p:V3(0.10, 2.38, 0.10), t:V3(0.00, 0.10, 0.00) },
 };
 /* the page opens on the 入口 view: stand the camera at the preset straight away
@@ -1682,14 +1708,16 @@ const tourOrder = ['entrance','sofa','dining','tv','passage','ceiling','top'];
 /* the 天花 view looks up from below the target, so its orbit needs the polar
    limit relaxed while it is on; the limit is restored when a flight lands */
 const POLAR_DEFAULT = 1.545, POLAR_CEILING = 2.80;
-/* the 廚房 view steps into the tiny galley, so it gets a wider lens and its own
-   camera fence; both are handed back when a flight lands */
-const FOV_DEFAULT = 58, FOV_KITCHEN = 72;
+/* the 廚房 / 客房 views step into tight rooms, so they get a wider lens and
+   their own camera fences; both are handed back when a flight lands */
+const FOV_DEFAULT = 58, FOV_SMALL = 72;
+const smallRoom = name => (name === 'kitchen' || name === 'guestroom');
 /* the camera is fenced into the room it is showing (no wall clipping): the 廚房
    view moves the fence into the galley kitchen instead */
 const BOUNDS_ROOM    = { x:[X0+0.14, X1-0.14], y:[0.30, H-0.18], z:[Z0+0.14, Z1-0.14] };
 const BOUNDS_KITCHEN = { x:[-2.50, -1.00], y:[0.35, 2.30], z:[-2.86, -1.44] };
-const boundsOf = name => name === 'kitchen' ? BOUNDS_KITCHEN : BOUNDS_ROOM;
+const BOUNDS_GUEST   = { x:[4.46, 6.44], y:[0.35, 2.30], z:[-1.79, 0.14] };
+const boundsOf = name => name === 'kitchen' ? BOUNDS_KITCHEN : (name === 'guestroom' ? BOUNDS_GUEST : BOUNDS_ROOM);
 const unionBounds = (a,b)=>({ x:[Math.min(a.x[0],b.x[0]), Math.max(a.x[1],b.x[1])],
                               y:[Math.min(a.y[0],b.y[0]), Math.max(a.y[1],b.y[1])],
                               z:[Math.min(a.z[0],b.z[0]), Math.max(a.z[1],b.z[1])] });
@@ -1701,7 +1729,7 @@ function flyTo(name, dur=1.4){
   camAnim.bounds = boundsOf(name);                     // applied when the flight lands
   camBounds = unionBounds(camBounds, camAnim.bounds);  // …the fence opens up meanwhile
   camAnim.fromFov = camera.fov;                        // …and the lens eases over too
-  camAnim.toFov = (name === 'kitchen') ? FOV_KITCHEN : FOV_DEFAULT;
+  camAnim.toFov = smallRoom(name) ? FOV_SMALL : FOV_DEFAULT;
   camAnim.fromP.copy(camera.position); camAnim.toP.copy(p.p);
   camAnim.fromT.copy(controls.target); camAnim.toT.copy(p.t);
   camAnim.t = 0; camAnim.dur = dur; camAnim.active = true;
@@ -1731,7 +1759,7 @@ btnSpin.addEventListener('click', ()=>{
 
 /* keyboard */
 window.addEventListener('keydown', e=>{
-  const map = { '1':'entrance', '2':'sofa', '3':'dining', '4':'tv', '5':'passage', '6':'top', '7':'ceiling', '8':'kitchen' };
+  const map = { '1':'entrance', '2':'sofa', '3':'dining', '4':'tv', '5':'passage', '6':'top', '7':'ceiling', '8':'kitchen', '9':'guestroom' };
   if(map[e.key]){ stopTour(); flyTo(map[e.key]); }
   if(e.key === 'n' || e.key === 'N') setNight(!state.night);
 });
@@ -1879,7 +1907,7 @@ window.__room = {
     camAnim.active = false;
     controls.maxPolarAngle = (name === 'ceiling') ? POLAR_CEILING : POLAR_DEFAULT;
     camBounds = boundsOf(name);
-    camera.fov = (name === 'kitchen') ? FOV_KITCHEN : FOV_DEFAULT;
+    camera.fov = smallRoom(name) ? FOV_SMALL : FOV_DEFAULT;
     camera.updateProjectionMatrix();
     camera.position.copy(p.p); controls.target.copy(p.t);
     controls.update(); renderer.render(scene, camera);
