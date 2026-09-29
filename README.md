@@ -63,14 +63,14 @@ reads, left to right, exactly as drawn:
 * **Window wall (south)** — ≈ 3 m window with a **云石 window board**, security grille and sheer
   curtains. The sofa sits with its back to it, facing the TV wall. Outside: a procedural high-floor
   **city view** whose lit windows glow at night.
-* **Living side** — cream leather sofa, ottoman with a **sleeping ginger cat** (breathing animation),
-  rug and teddy bear. **No coffee table.**
+* **Living side** — cream leather sofa with **two panda plush toys**, rug, and ottoman with a
+  **sleeping ginger cat** (breathing animation). **No coffee table.**
 * **大門 & 飯台** — the main door is on the **west wall**, between the kitchen door and the dining
   table: step in and the **飯台** (backing onto the west wall, with no cabinet beside it) is on your
-  right, the 廚房門 on your left. Pendant lamp above the table; the sideboard, lamp and abstract art
-  moved to the east wall.
-* **到頂大柜** — the floor-to-ceiling cabinet standing to the sofa's right: **趟門 sliding doors
-  below, normal hinged doors above**, hung right up to the ceiling.
+  right, the 廚房門 on your left. Pendant lamp above the table.
+* **到頂大柜** — a floor-to-ceiling built-in filling the full east-wall run to the sofa's right,
+  from the passage opening to the south corner: **upper cupboards, an open central display niche,
+  and lower sliding-door storage**, hung right up to the ceiling.
 * **過道 Passage (east)** — the east wall opens at its north end into a short passage: the 廁所門
   opens off the TV wall just around the corner, the **主人房門** sits on the passage's south side,
   and the passage **ends at the 客房門**, which opens into the guest room beyond — a platform bed

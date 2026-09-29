@@ -149,12 +149,12 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
    飯台: step in and the dining table (backing onto the west wall) is on your
    right, the kitchen door on your left.
 
-   The SOUTH wall carries the main window (≈ 3 m, 云石窗台) — the sofa sits with
-   its back to it, facing the TV wall, and the 到頂大柜 (floor-to-ceiling cabinet:
-   sliding doors below, hinged doors above) stands to the sofa's right.
+    The SOUTH wall carries the main window (≈ 3 m, 云石窗台) — the sofa sits with
+    its back to it, facing the TV wall; the 到頂大柜 fills the east wall to the
+    sofa's right, from the passage opening to the south corner.
 
-   The EAST wall opens (at its north end) into a short 過道 — plain walls, no
-   plant decorations anywhere: the 廁所門 opens off the TV wall at its entrance,
+    The EAST wall opens (at its north end) into a short 過道; the passage is kept
+    bare: the 廁所門 opens off the TV wall at its entrance,
    the 主人房門 sits on its south side, and the passage ends at the 客房門, which
    opens into the guest room beyond. There is no coffee table and no ceiling fan.
    ===================================================================== */
@@ -297,7 +297,7 @@ const M_glowWarm  = emissiveMat(0xffe2b8, 0.18, 1.30);   // downlight discs
 const M_glowStrip = emissiveMat(0xffd9a0, 0.12, 0.95);   // cabinet / console strips
 const M_glowCab   = emissiveMat(0xffe6c0, 0.15, 1.15);   // display cabinet LED
 const M_glowBulb  = emissiveMat(0xffdba6, 0.0,  1.55);   // pendant bulb
-const M_glowLamp  = emissiveMat(0xffdfae, 0.0,  1.05);   // sideboard lamp shade
+const M_glowLamp  = emissiveMat(0xffdfae, 0.0, 1.05);   // bedside-lamp glow
 const M_glowKitch = emissiveMat(0xffe0b0, 0.1,  1.0);    // kitchen strip
 const M_glowBath  = emissiveMat(0xeef4ff, 0.08, 0.95);   // bathroom light
 const M_cityWin   = new THREE.MeshBasicMaterial({ color:0xffcf8a, transparent:true, opacity:0.0, depthWrite:false });
@@ -342,7 +342,6 @@ dLight(pendantLight, 0, 3.0);
 const cabLight  = dLight(new THREE.PointLight(0xffe0b0, 0, 1.9, 2), 0.2, 0.9);   cabLight.position.set(-1.18, 1.80, Z0+0.34);
 const kitLight  = dLight(new THREE.PointLight(0xffd9a8, 0, 6.0, 2), 0.3, 2.0);   kitLight.position.set(-1.75, 2.15, -2.1);
 const bathLight = dLight(new THREE.PointLight(0xeef4ff, 0, 5.0, 2), 0.42, 1.4);  bathLight.position.set(1.75, 2.1, -2.0);
-const lampLight = dLight(new THREE.PointLight(0xffd2a0, 0, 3.2, 2), 0, 1.1);     lampLight.position.set(X1-0.21, 1.05, -0.21);
 const tvLight   = dLight(new THREE.PointLight(0x7fb2ff, 0, 3.0, 2), 0, 0.6);     tvLight.position.set(TVC, 1.22, Z0+0.60);
 const passLight = dLight(new THREE.PointLight(0xffd9a8, 0, 4.6, 2), 0.78, 1.5);  passLight.position.set(X1+1.0, 2.28, -0.82);
 const gstLight  = dLight(new THREE.PointLight(0xffe0b0, 0, 5.4, 2), 0.30, 1.6);  gstLight.position.set(3.45, 2.18, -2.45);
@@ -1309,11 +1308,6 @@ const acCoverPanels = [];                        // slid by the Open / Close chi
   furn.add(box(0.17, 0.10, 0.13, std({ color:0xd8cfc0, roughness:0.9 }), TV0+0.52, 0.805, Z0+0.20));   // box
   furn.add(box(0.14, 0.028, 0.19, std({ color:0x9aa4ae, roughness:0.85 }), TVC+0.30, 0.773, Z0+0.14).rotateY(0.2));
   furn.add(cyl(0.045, 0.038, 0.15, M.ceramic, TVC+0.62, 0.833, Z0+0.16, 18));                          // bottle
-  const plant2 = new THREE.Group();
-  plant2.add(cyl(0.045, 0.035, 0.07, M.terracotta, 0, 0.035, 0, 14));
-  plant2.add(sphere(0.048, M.leafB, 0, 0.105, 0, 12));
-  plant2.position.set(TV0+0.86, 0.7575, Z0+0.13);
-  furn.add(plant2);
   /* router + coiled cables on the lower shelf */
   furn.add(box(0.21, 0.032, 0.135, M.black, TV0+0.30, 0.589, Z0+0.17));
   furn.add(cyl(0.004,0.004,0.10,M.black, TV0+0.22, 0.65, Z0+0.15, 6).rotateZ(0.5));
@@ -1384,33 +1378,55 @@ const acCoverPanels = [];                        // slid by the Open / Close chi
   furn.add(C);
 }
 
-/* ---------- 到頂大柜 — floor-to-ceiling cabinet standing to the sofa's right.
-   Lower half: two 趟門 (sliding panels).  Upper half: normal hinged doors. ---------- */
+/* ---------- 到頂大柜 — full-wall built-in with upper and lower storage
+   framing a recessed display niche. ---------- */
 {
   const C = new THREE.Group();
-  const cz = 0.82, W = 0.92, DP = 0.62;
-  const xf = X1 - DP + 0.02;                  // 1.525 — carcass front face
-  const TOP = H - FL;                         // 到頂 — floor to ceiling
-  /* carcass, plinth and top filler */
-  C.add(box(DP-0.03, TOP-0.12, W, M.whiteSatin, X1-DP/2-0.015, (TOP-0.12)/2+0.10, cz));
-  C.add(box(DP-0.06, 0.10, W-0.06, std({ color:0xe9e7e2, roughness:0.6 }), X1-DP/2-0.03, 0.05, cz));
-  C.add(box(DP, 0.06, W, M.whiteSatin, X1-DP/2, TOP-0.03, cz));
-  /* 下櫃 — 趟門: two overlapping sliding panels */
-  const LW = W/2 + 0.03, LH = 1.16, ly = 0.10 + LH/2;
+  const cz = (PAS_Z1+Z1)/2, W = Z1-PAS_Z1, DP = 0.62;
+  const cx = X1-DP/2, xf = X1-DP+0.02;
+  const TOP = H-FL, BASE = 0.10;
+  const OPEN_Y0 = 0.78, OPEN_Y1 = 1.70;
+  const carcassH = TOP-BASE, carcassY = (TOP+BASE)/2;
+  const sideZ = W/2-0.025;
+
+  /* Carcass frame leaves the center bay open at the front. */
+  C.add(box(DP-0.03, carcassH, 0.05, M.whiteSatin, cx, carcassY, cz-sideZ));
+  C.add(box(DP-0.03, carcassH, 0.05, M.whiteSatin, cx, carcassY, cz+sideZ));
+  C.add(box(0.025, carcassH, W-0.04, M.whiteSatin, X1-0.03, carcassY, cz));
+  C.add(box(DP-0.06, 0.10, W-0.06, std({ color:0xe9e7e2, roughness:0.6 }), cx, 0.05, cz));
+  C.add(box(DP, 0.06, W, M.whiteSatin, cx, TOP-0.03, cz));
+  C.add(box(DP-0.03, 0.05, W-0.04, M.whiteSatin, cx, BASE+0.025, cz));
+
+  /* Open center niche with a recessed oak back and display shelf. */
+  C.add(box(DP-0.03, 0.05, W-0.06, M.whiteSatin, cx, OPEN_Y0-0.025, cz));
+  C.add(box(DP-0.03, 0.05, W-0.06, M.whiteSatin, cx, OPEN_Y1-0.025, cz));
+  C.add(box(DP-0.03, 0.025, W-0.04, M.whiteSatin, cx, OPEN_Y1+0.0125, cz));
+  C.add(box(0.014, OPEN_Y1-OPEN_Y0-0.10, W-0.12, M.oakPale,
+    X1-0.055, (OPEN_Y0+OPEN_Y1)/2, cz));
+  C.add(box(0.025, 0.012, W-0.18, M_glowCab, xf-0.01, OPEN_Y1-0.056, cz));
+
+  /* Books and a ceramic vessel sit inside the niche. */
+  C.add(box(0.18, 0.03, 0.13, std({ color:0x8a6f5a, roughness:0.85 }), cx-0.10, OPEN_Y0+0.015, cz-0.48));
+  C.add(box(0.16, 0.025, 0.12, std({ color:0x6f7d8a, roughness:0.85 }), cx-0.08, OPEN_Y0+0.0425, cz-0.48).rotateY(-0.06));
+  C.add(cyl(0.052, 0.044, 0.14, M.ceramic, cx-0.03, OPEN_Y0+0.07, cz+0.46, 18));
+
+  /* 下櫃 — two overlapping sliding panels */
+  const LW = W/2+0.03, LH = OPEN_Y0-BASE, ly = BASE+LH/2;
   const p1 = box(0.022, LH, LW, M.whiteGloss, xf-0.028, ly, cz-W/4+0.015);
   const p2 = box(0.022, LH, LW, M.whiteGloss, xf-0.004, ly, cz+W/4-0.015);
   C.add(p1); C.add(p2);
-  C.add(box(0.010, LH-0.12, 0.014, M.panelLine, xf-0.041, ly, cz-W/4+0.015+LW/2-0.03));   // 拉手縫
+  C.add(box(0.010, LH-0.12, 0.014, M.panelLine, xf-0.041, ly, cz-W/4+0.015+LW/2-0.03));
   C.add(box(0.010, LH-0.12, 0.014, M.panelLine, xf-0.017, ly, cz+W/4-0.015-LW/2+0.03));
-  C.add(box(0.010, 0.030, W-0.02, M.alu, xf-0.016, 1.285, cz));                            // 趟門上下軌
-  C.add(box(0.010, 0.030, W-0.02, M.alu, xf-0.016, 0.115, cz));
-  C.add(box(DP-0.02, 0.024, W, M.panelLine, X1-DP/2-0.01, 1.325, cz));                     // 中橫板
-  /* 上櫃 — hinged doors with long bar handles */
-  const uw = (W-0.03)/2, uy = (1.36 + TOP-0.06)/2, uh = TOP-0.06-1.36;
+  C.add(box(0.010, 0.030, W-0.02, M.alu, xf-0.016, OPEN_Y0+0.015, cz));
+  C.add(box(0.010, 0.030, W-0.02, M.alu, xf-0.016, BASE+0.015, cz));
+
+  /* 上櫃 — two hinged doors above the open niche */
+  const upperY0 = OPEN_Y1+0.025, upperY1 = TOP-0.06;
+  const uw = (W-0.03)/2, uy = (upperY0+upperY1)/2, uh = upperY1-upperY0;
   [0,1].forEach(i=>{
-    const z = cz - W/2 + 0.015 + uw/2 + i*(uw+0.015);
+    const z = cz-W/2+0.015+uw/2+i*(uw+0.015);
     C.add(box(0.022, uh, uw, M.whiteSatin, xf-0.010, uy, z));
-    C.add(cyl(0.008, 0.008, 0.22, M.steelDark, xf-0.028, uy, z + (i? -1 : 1)*(uw/2-0.05), 10));
+    C.add(cyl(0.008, 0.008, 0.22, M.steelDark, xf-0.028, uy, z+(i ? -1 : 1)*(uw/2-0.05), 10));
   });
   shadows(C); furn.add(C);
 }
@@ -1479,73 +1495,6 @@ const acCoverPanels = [];                        // slid by the Open / Close chi
   furn.add(P);
 }
 
-/* ---------- oak sideboard + lamp + art (east wall, beside the 過道) ---------- */
-{
-  const S = new THREE.Group();
-  const cx = 0, cz = 0;                       // built at the origin, then placed on the east wall
-  S.add(roundedBox(0.66, 0.62, 0.38, 0.02, M.oak).translateX(cx).translateY(0.41).translateZ(cz));
-  [[-0.28,-0.13],[0.28,-0.13],[-0.28,0.13],[0.28,0.13]].forEach(([lx,lz])=>{
-    S.add(cyl(0.018, 0.015, 0.10, M.walnut, cx+lx, 0.05, cz+lz, 10));
-  });
-  /* door / drawer faces */
-  S.add(box(0.27, 0.5, 0.02, M.oakPale, cx-0.17, 0.41, cz-0.19));
-  S.add(box(0.27, 0.22, 0.02, M.oakPale, cx+0.17, 0.52, cz-0.19));
-  S.add(box(0.27, 0.22, 0.02, M.oakPale, cx+0.17, 0.28, cz-0.19));
-  S.add(box(0.27, 0.012, 0.022, M.brass, cx-0.17, 0.60, cz-0.20));
-  S.add(box(0.27, 0.012, 0.022, M.brass, cx+0.17, 0.60, cz-0.20));
-  S.add(box(0.27, 0.012, 0.022, M.brass, cx+0.17, 0.36, cz-0.20));
-  /* open middle shelf with basket + books */
-  S.add(box(0.26, 0.02, 0.34, M.oak, cx, 0.41, cz));
-  const basket = cyl(0.09, 0.075, 0.13, std({ color:0xb59a6f, roughness:1 }), cx, 0.485, cz, 18);
-  S.add(basket);
-  S.add(box(0.03, 0.2, 0.14, std({color:0x7d6a8a, roughness:0.85}), cx-0.10, 0.52, cz+0.02));
-  /* table lamp (brass + linen) */
-  const Lp = new THREE.Group();
-  Lp.add(cyl(0.07, 0.09, 0.02, M.brass, 0, 0.01, 0, 18));
-  Lp.add(cyl(0.008, 0.008, 0.24, M.brass, 0, 0.13, 0, 10));
-  const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.115, 0.15, 22, 1, true), M.linen);
-  shade.position.y = 0.315; Lp.add(shade);
-  Lp.add(sphere(0.02, M_glowLamp, 0, 0.30, 0, 10));
-  Lp.position.set(cx+0.20, 0.72, cz);
-  Lp.traverse(o=>{ if(o.isMesh) o.castShadow = true; });
-  S.add(Lp);
-  /* dried-flower vase + books */
-  const vase = new THREE.Group();
-  vase.add(cyl(0.045, 0.035, 0.16, M.terracotta, 0, 0.08, 0, 16));
-  for(let i=0;i<4;i++){
-    const st = cyl(0.003, 0.003, rr(0.3,0.45), std({color:0x8a7a5a, roughness:0.9}), Math.cos(i*1.6)*0.02, 0.30, Math.sin(i*1.6)*0.02, 6);
-    st.rotation.z = rr(-0.25,0.25); st.rotation.x = rr(-0.25,0.25);
-    vase.add(st);
-    vase.add(sphere(0.016, std({color: i%2?0xd8b850:0xe8e0d0, roughness:0.8}), Math.cos(i*1.6)*0.02, 0.52, Math.sin(i*1.6)*0.02, 8));
-  }
-  vase.position.set(cx-0.18, 0.72, cz);
-  vase.children.forEach(c=>{ c.castShadow = true; });
-  S.add(vase);
-  S.add(box(0.16, 0.028, 0.12, std({color:0x8a9aa8, roughness:0.8}), cx-0.02, 0.734, cz).rotateY(0.2));
-  shadows(S);
-  S.rotation.y = Math.PI/2;                   // front faces west, into the room
-  S.position.set(X1-0.19, 0, -0.01);
-  furn.add(S);
-
-  /* two abstract art frames above (procedural mid-century shapes) */
-  function artFrame(w, h, mono){
-    const F = new THREE.Group();
-    F.add(box(w, h, 0.022, M.oak, 0, 0, 0));
-    F.add(box(w-0.05, h-0.05, 0.012, std({ color:0xf2ece0, roughness:0.9 }), 0, 0, 0.014));
-    const shp = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape()
-      .absarc(-w*0.12, -h*0.10, w*0.16, 0, Math.PI*2, false)), std({ color: mono ? 0xc97a54 : 0xb98a55, roughness:0.85 }));
-    shp.position.set(0, 0, 0.021); F.add(shp);
-    const shp2 = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape().absarc(w*0.14, h*0.14, w*0.09, 0, Math.PI*2, false)),
-      std({ color: 0x7a8fa8, roughness:0.85 }));
-    shp2.position.set(0, 0, 0.021); F.add(shp2);
-    F.add(box(w*0.5, 0.02, 0.012, std({color:0x9aa88a, roughness:0.85}), -w*0.06, -h*0.26, 0.021));
-    F.rotation.y = -Math.PI/2;
-    return F;
-  }
-  const a1 = artFrame(0.42, 0.55, false); a1.position.set(X1-0.05, 1.62, -0.17); furn.add(a1);
-  const a2 = artFrame(0.34, 0.44, true);  a2.position.set(X1-0.05, 1.58, 0.15); furn.add(a2);
-}
-
 /* ---------- entry corner (by the west 大門): hooks, tote, cap, umbrella, mat, shoes ---------- */
 {
   const E = new THREE.Group();
@@ -1607,52 +1556,42 @@ const acCoverPanels = [];                        // slid by the Open / Close chi
   shadows(E); furn.add(E);
 }
 
-/* ---------- ficus + snake plant ---------- */
+/* ---------- two panda plushies on the sofa ---------- */
 {
-  const P = new THREE.Group();
-  P.add(cyl(0.13, 0.10, 0.24, M.terracotta, 0, 0.12, 0, 22));
-  P.add(cyl(0.115, 0.115, 0.02, M.soil, 0, 0.245, 0, 22));
-  P.add(cyl(0.018, 0.024, 0.5, std({ color:0x6a5238, roughness:0.9 }), 0, 0.5, 0, 8));
-  P.add(cyl(0.013, 0.016, 0.4, std({ color:0x6a5238, roughness:0.9 }), 0.05, 0.62, 0.03, 8).rotateZ(-0.18));
-  const leafMats = [M.leafA, M.leafB, M.leafC];
-  for(let i=0;i<26;i++){
-    const r = rr(0.06, 0.10);
-    const s = sphere(r, leafMats[i%3], 0, 0, 0, 10);
-    s.position.set(rr(-0.13,0.13), rr(0.68, 1.14), rr(-0.13,0.13));
-    s.scale.set(1, rr(0.7,0.95), 1);
-    P.add(s);
+  const pandaWhite = std({ color:0xf5f2eb, roughness:0.98 });
+  const pandaBlack = std({ color:0x202124, roughness:0.98 });
+  function makePanda(){
+    const panda = new THREE.Group();
+    const body = sphere(0.09, pandaWhite, 0, 0.10, 0, 18);
+    body.scale.set(0.92, 1.05, 0.84);
+    panda.add(body);
+    const belly = sphere(0.056, pandaWhite, 0, 0.105, -0.063, 14);
+    belly.scale.set(1.05, 1.0, 0.34);
+    panda.add(belly);
+    panda.add(sphere(0.064, pandaWhite, 0, 0.218, 0, 18));
+    [-1, 1].forEach(side=>{
+      panda.add(sphere(0.026, pandaBlack, side*0.052, 0.263, -0.002, 12));
+      const patch = sphere(0.023, pandaBlack, side*0.028, 0.222, -0.055, 12);
+      patch.scale.set(0.70, 1.20, 0.50);
+      panda.add(patch);
+      panda.add(sphere(0.006, pandaWhite, side*0.028, 0.223, -0.068, 8));
+      panda.add(sphere(0.003, pandaBlack, side*0.029, 0.222, -0.073, 8));
+      panda.add(sphere(0.033, pandaBlack, side*0.075, 0.105, -0.006, 12));
+      panda.add(sphere(0.034, pandaBlack, side*0.041, 0.028, -0.018, 12));
+    });
+    panda.add(sphere(0.011, pandaBlack, 0, 0.192, -0.067, 10));
+    panda.position.y = 0.41;
+    shadows(panda);
+    return panda;
   }
-  P.position.set(-0.80, 0, 0.88);
-  shadows(P); furn.add(P);
-
-  /* snake plant beside it (it used to sit on the old drawer chest) */
-  const snake = new THREE.Group();
-  snake.add(cyl(0.05, 0.042, 0.09, M.ceramic, 0, 0.045, 0, 16));
-  for(let i=0;i<7;i++){
-    const blade = new THREE.Mesh(new THREE.ConeGeometry(0.022, rr(0.30,0.46), 6), M.leafC);
-    blade.position.set(rr(-0.03,0.03), 0.26, rr(-0.03,0.03));
-    blade.rotation.z = rr(-0.16,0.16); blade.rotation.x = rr(-0.16,0.16);
-    snake.add(blade);
-  }
-  snake.position.set(-0.50, 0, 1.04);
-  shadows(snake); furn.add(snake);
-}
-
-/* ---------- teddy on the sofa ---------- */
-{
-  const Bear = new THREE.Group();
-  const body = sphere(0.09, M.teddy, 0, 0.10, 0, 16);
-  body.scale.set(1, 1.05, 0.9);
-  Bear.add(body);
-  Bear.add(sphere(0.065, M.teddy, 0, 0.215, 0.015, 14));
-  Bear.add(sphere(0.024, M.teddy, -0.05, 0.265, 0.01, 10));
-  Bear.add(sphere(0.024, M.teddy,  0.05, 0.265, 0.01, 10));
-  Bear.add(sphere(0.028, M.teddy, -0.085, 0.13, 0.03, 10));
-  Bear.add(sphere(0.028, M.teddy,  0.085, 0.13, 0.03, 10));
-  Bear.add(sphere(0.03, M.cushionCrm, 0, 0.19, 0.055, 10));   // muzzle
-  Bear.position.set(0.72, 0.41, 0.72);
-  Bear.rotation.y = -2.0;
-  shadows(Bear); furn.add(Bear);
+  const panda1 = makePanda();
+  panda1.position.set(0.18, 0.41, 0.72);
+  panda1.rotation.y = -0.10;
+  const panda2 = makePanda();
+  panda2.position.set(0.81, 0.41, 0.72);
+  panda2.scale.setScalar(0.92);
+  panda2.rotation.y = 0.10;
+  furn.add(panda1, panda2);
 }
 
 /* ---------- floating dust motes in the window light ---------- */
