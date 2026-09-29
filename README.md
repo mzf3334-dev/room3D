@@ -1,22 +1,15 @@
-# room3D — 3D Living & Dining Room
+# room3D: 3D Living and Dining Room
 
-An interactive **3D living & dining room** built with **three.js** in a **single HTML file**, modelled
-after a real Hong Kong "2-bedroom, 1-living-room" flat (living room ≈ **4.25 m × 2.60 m**).
+An interactive Three.js model of a Hong Kong apartment living room, about **4.25 m × 2.60 m**.
 
-**▶ View it online: <https://mzf3334-dev.github.io/room3D/>**
+**View online: <https://mzf3334-dev.github.io/room3D/>**
 
-> **Procedural only.** Every object is generated from three.js geometry primitives at runtime —
-> **no 3D models, no texture maps, no image files**. Materials, the city outside the window, the TV
-> screen artwork, even the abstract wall art are pure code.
+The room is built from code-generated geometry. It uses no 3D models or image textures.
 
-## Run it locally
+## Run Locally
 
-No build step, no server needed:
-
-* Open **`index.html`** directly (it works from `file://`), or
-* serve the folder: `python -m http.server` → open `http://localhost:8000/`
-
-Internet is needed on first load — three.js r170 is pulled from the jsDelivr CDN via an import map.
+Open `index.html` in a browser, or run `python -m http.server 8000` and visit
+`http://localhost:8000/`. An internet connection is needed to load Three.js on the first visit.
 
 ## Controls
 
@@ -28,78 +21,56 @@ Internet is needed on first load — three.js r170 is pulled from the jsDelivr C
 | Keys `1`–`9`, `0` | Camera presets (Entrance / Sofa / Dining / TV / Passage / Top / Ceiling / Kitchen) + bedroom angles |
 | Key `N` | Day ⇄ Night |
 
-The page opens on the **Entrance** view — as if you have just stepped in through the 大門 — and
-**天花 Ceiling** (key `7`) drops the camera low and looks up at the ceiling, while **廚房 Kitchen**
-(key `8`) steps through the 廚房門 into the galley kitchen.
+The page opens at the entrance. Key `7` looks up at the ceiling, and key `8` moves into the kitchen.
 
-The **客房 Guest Room** chip (key `9`) and the **主人房 Master Bedroom** chip (key `0`) are small rooms,
-so instead of one tight shot each **steps through four angles** on every click:
+Keys `9` and `0` cycle through four views of the guest room and master bedroom: doorway, overview,
+bed, and desk or window ledge.
 
-* 客房 — **門口** (from the doorway) ➜ **全景** (the whole wooden loft) ➜ **上下床** (bed over storage)
-  ➜ **書檯窗台** (desk + marble window board)
-* 主人房 — **門口** ➜ **全景** (a wide sweep of the room) ➜ **上下床** (the wooden bunk) ➜ **窗台大櫃**
-  (the 雲石窗台 with the floor-to-ceiling wooden cabinet)
+On-screen controls open or close the kitchen door and air-conditioner cover. Tour starts a guided
+camera tour, and Spin rotates the view around the room.
 
-On-screen chips: camera presets, **🚪 廚房趟門** and **❄️ 冷氣拉門** (slide the kitchen door shut /
-draw the A/C cover — the cover stays shut in winter), **🌙 Night** (cross-fades the whole light rig),
-**🎥 Tour** (guided camera) and **⟳ Spin**.
+## Room Overview
 
-## What's in the room
+* **North wall:** Kitchen sliding door, display cabinet with shoe storage, TV, window air conditioner,
+  TV console, shelf beside the bathroom door, and bathroom door.
+* **South wall:** A wide window with safety bars and curtains. The sofa faces the TV wall. Two panda
+  plush toys sit on the sofa, and a sleeping cat rests on the ottoman.
+* **East wall:** A floor-to-ceiling built-in beside the sofa, with upper cupboards, an open display
+  niche, and lower sliding-door storage.
+* **Dining area:** The dining table sits near the main entrance on the west side.
+* **Passage:** A short hallway leads to the guest room and master bedroom. It has no plant decor.
+* **Guest room:** A wooden loft bed with storage, a desk, a wardrobe, and a window air conditioner.
+* **Master bedroom:** A wooden bunk bed, storage boxes, a window ledge, and a full-height cabinet.
+* **Kitchen and bathroom:** The kitchen has an induction hob, sink, washer, fridge, and wall cabinets.
+  The bathroom has tile walls and floor.
 
-The layout follows the owner's sketch and the site photos. The **north wall is the TV wall** and
-reads, left to right, exactly as drawn:
+The room also has parquet flooring, recessed lights, and a generated city view. Cooling comes from
+the window air conditioner; there is no ceiling fan or split air conditioner.
 
-| 廚房門 | 中空櫃 |  電視櫃 — 白色飾牆 + **冷氣窗**(窗口式冷氣) + 電視 + 長櫃  | 廁門貨架 | 廁所門 |
-| --- | --- | --- | --- | --- |
-| 0.70 m | 0.50 m | 1.95 m — **云石窗台 ≈ 2 m** | 0.40 m | 0.70 m |
+## Chinese Glossary
 
-* **Shell** — teak strip-parquet floor (≈230 instanced planks), white walls, 6 recessed downlights.
-* **電視牆 TV wall** — light-oak **廚房門**, now a **趟門** on a room-side track that slides shut in
-  front of the 中空櫃; walnut **中空櫃** (glass display over an open shoe rack); raised white feature
-  wall carrying the **55″ TV** and the **窗口式冷氣** in its 冷氣窗 — with a two-panel **拉門** that
-  slides across the A/C (shut in winter) and a row of **吊櫃** hanging above it; the long low
-  **電視櫃** drawn in the sketch — top slab + divided lower level, **three bays**, open, white with
-  oak lipping; dark plank wall with the clock, the **廁門貨架** book shelf, and the 廁所門.
-* **Window wall (south)** — ≈ 3 m window with a **云石 window board**, security grille and sheer
-  curtains. The sofa sits with its back to it, facing the TV wall. Outside: a procedural high-floor
-  **city view** whose lit windows glow at night.
-* **Living side** — cream leather sofa with **two panda plush toys**, rug, and ottoman with a
-  **sleeping ginger cat** (breathing animation). **No coffee table.**
-* **大門 & 飯台** — the main door is on the **west wall**, between the kitchen door and the dining
-  table: step in and the **飯台** (backing onto the west wall, with no cabinet beside it) is on your
-  right, the 廚房門 on your left. Pendant lamp above the table.
-* **到頂大柜** — a floor-to-ceiling built-in filling the full east-wall run to the sofa's right,
-  from the passage opening to the south corner: **upper cupboards, an open central display niche,
-  and lower sliding-door storage**, hung right up to the ceiling.
-* **過道 Passage (east)** — the east wall opens at its north end into a short passage: the 廁所門
-  opens off the TV wall just around the corner, the **主人房門** sits on the passage's south side,
-  and the passage **ends at the 客房門**, which opens into the guest room beyond — a platform bed
-  whose storage drawers face the door, a wall fan, its own window. The passage is kept bare, with
-  **no plant decorations**.
-* **客房 Guest room (key `9`)** — through the door at the end of the passage: a wooden loft — the
-  **bed over a storage cabinet** — with a **window-type A/C** up on the wall above it, and a desk
-  beside the cabinet, tucked under the **雲石窗台** (marble window board) that runs along the desk's
-  left. The desk chair, wardrobe and the wall's hanging jacket finish the room. Four camera angles
-  (門口 / 全景 / 上下床 / 書檯窗台) step through so the whole room can be seen.
-* **主人房 Master bedroom (key `0`)** — straight across the passage from the 廁所門: a **wooden bunk
-  bed** (上下木床 — two bunks with the guard rail and ladder, storage boxes underneath), a **雲石窗台**
-  on the window wall and a **floor-to-ceiling wooden cabinet** standing beside it. Four camera angles
-  (門口 / 全景 / 上下床 / 窗台大櫃) step through so the whole room can be seen.
-* **Entry corner & rooms** — shoes, umbrella stand and coat hooks beside the west door; behind the
-  TV wall is a fitted galley kitchen — **double-zone induction hob + 抽氣機 hood**, sink with mixer
-  tap, **washing machine under the worktop**, fridge with its magnets and tea towels, rice cooker,
-  frosted **吊櫃** wall cabinets and the **廚房平台** worktop run (step in with the **廚房 Kitchen**
-  preset) — and a tiled bathroom.
-
-**No ceiling fan** and no split A/C — the cooling is the window-type unit above the TV cabinet.
-
-## Lighting
-
-One cross-fading rig: warm directional "sun" + hemisphere light + PMREM `RoomEnvironment` by day;
-downlights, pendant, cabinet LEDs, kitchen/bathroom strips and the TV shader take over at night.
-Shadows: PCFSoft.
-
-## Tech
-
-three.js `0.170.0` (jsDelivr import map), `OrbitControls`, `RoomEnvironment` and a seeded PRNG
-(`mulberry32`) for reproducible detail. Single file, no dependencies.
+| Chinese | English |
+| --- | --- |
+| 客房 | Guest room |
+| 主人房 | Master bedroom |
+| 門口 | Doorway |
+| 全景 | Overview |
+| 上下床 | Bunk bed |
+| 書檯窗台 | Desk and window ledge |
+| 窗台大櫃 | Window ledge and cabinet |
+| 大門 | Main entrance |
+| 飯台 | Dining table |
+| 廚房 | Kitchen |
+| 廚房門 | Kitchen door |
+| 趟門 | Sliding door |
+| 中空櫃 | Display cabinet with shoe storage |
+| 電視牆 | TV wall |
+| 電視櫃 | TV console |
+| 冷氣窗 | Air-conditioner window |
+| 拉門 | Sliding cover |
+| 吊櫃 | Upper wall cabinets |
+| 廁所門 | Bathroom door |
+| 廁門貨架 | Shelf beside the bathroom door |
+| 過道 | Passage |
+| 雲石窗台 | Marble window ledge |
+| 天花 | Ceiling |
